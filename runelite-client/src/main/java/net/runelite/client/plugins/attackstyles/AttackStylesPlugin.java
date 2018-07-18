@@ -204,9 +204,8 @@ public class AttackStylesPlugin extends Plugin
 			updateAttackStyle(client.getVar(Varbits.EQUIPPED_WEAPON_TYPE), attackStyleVarbit,
 				client.getVar(Varbits.DEFENSIVE_CASTING_MODE));
 
-			if (loginWarningMessageCount == 4)
-				updateWarning(false);
-			else if (loginWarningMessageCount <= 2)
+			updateWarning(false);
+			if (loginWarningMessageCount <= 2)
 				loginWarningMessageCount++;
 		}
 	}
@@ -225,11 +224,8 @@ public class AttackStylesPlugin extends Plugin
 			updateAttackStyle(equippedWeaponTypeVarbit, client.getVar(VarPlayer.ATTACK_STYLE),
 				client.getVar(Varbits.DEFENSIVE_CASTING_MODE));
 
-			if (loginWarningMessageCount == 3)
-				updateWarning(true);
-			else if (loginWarningMessageCount == 4 )
-				updateWarning(true);
-			else
+			updateWarning(true);
+			if (loginWarningMessageCount < 3)
 				loginWarningMessageCount++;
 		}
 	}
@@ -243,8 +239,7 @@ public class AttackStylesPlugin extends Plugin
 			updateAttackStyle(client.getVar(Varbits.EQUIPPED_WEAPON_TYPE), client.getVar(VarPlayer.ATTACK_STYLE),
 				castingModeVarbit);
 
-			if (loginWarningMessageCount == 4)
-				updateWarning(false);
+			updateWarning(false);
 		}
 	}
 
@@ -306,6 +301,7 @@ public class AttackStylesPlugin extends Plugin
 		{
 			warnedSkills.remove(skill);
 		}
+		updateWarning(false);
 	}
 
 	private void updateWarning(boolean weaponSwitch)
@@ -333,6 +329,7 @@ public class AttackStylesPlugin extends Plugin
 						}
 					}
 					warnedSkillSelected = true;
+					break;
 				}
 			}
 			if (loginWarningMessageCount == 3)
