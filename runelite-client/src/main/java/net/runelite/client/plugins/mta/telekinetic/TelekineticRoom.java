@@ -29,9 +29,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -56,8 +58,8 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
+import net.runelite.api.events.WallObjectSpawned;
 import net.runelite.api.queries.GroundObjectQuery;
-import net.runelite.api.queries.WallObjectQuery;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.plugins.mta.MTAConfig;
 import net.runelite.client.plugins.mta.MTARoom;
@@ -71,12 +73,15 @@ public class TelekineticRoom extends MTARoom
 
 	private final Client client;
 
+	private final List<WallObject> telekineticWalls = new ArrayList<>();
+
 	private Stack<Direction> moves = new Stack<>();
 	private LocalPoint destination;
 	private WorldPoint location;
 	private Rectangle bounds;
 	private NPC guardian;
 	private Maze maze;
+	private boolean recentlyAddedWalls;
 
 	@Inject
 	private TelekineticRoom(MTAConfig config, Client client)
@@ -85,9 +90,35 @@ public class TelekineticRoom extends MTARoom
 		this.client = client;
 	}
 
+	public void resetRoom()
+	{
+		telekineticWalls.clear();
+	}
+
+	@Subscribe
+	public void onWallObjectSpawned(WallObjectSpawned event)
+	{
+		final WallObject wall = event.getWallObject();
+		if (wall.getId() != TELEKINETIC_WALL)
+		{
+			return;
+		}
+
+		// Telekinetic room walls don't trigger WallObjectDespawned so we check if we added walls every tick
+		if (!recentlyAddedWalls)
+		{
+			telekineticWalls.clear();
+		}
+
+		recentlyAddedWalls = true;
+		telekineticWalls.add(wall);
+	}
+
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		recentlyAddedWalls = false;
+
 		if (!config.telekinetic()
 				|| !inside()
 				|| client.getGameState() != GameState.LOGGED_IN)
@@ -97,15 +128,10 @@ public class TelekineticRoom extends MTARoom
 			return;
 		}
 
-		WallObjectQuery qry = new WallObjectQuery()
-				.idEquals(TELEKINETIC_WALL);
-		WallObject[] result = qry.result(client);
-		int length = result.length;
-
-		if (maze == null || length != maze.getWalls())
+		if (maze == null || telekineticWalls.size() != maze.getWalls())
 		{
-			bounds = getBounds(result);
-			maze = Maze.fromWalls(length);
+			bounds = getBounds(telekineticWalls.toArray(new WallObject[0]));
+			maze = Maze.fromWalls(telekineticWalls.size());
 			client.clearHintArrow();
 		}
 		else if (guardian != null)
