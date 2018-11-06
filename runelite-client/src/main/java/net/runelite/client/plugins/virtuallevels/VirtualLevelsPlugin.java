@@ -28,6 +28,8 @@ package net.runelite.client.plugins.virtuallevels;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Provides;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
@@ -50,24 +52,22 @@ import net.runelite.client.plugins.PluginDescriptor;
 	tags = {"skill", "total", "max", "f2p", "free"},
 	enabledByDefault = false
 )
-
 public class VirtualLevelsPlugin extends Plugin
 {
 	private static final String TOTAL_LEVEL_TEXT_PREFIX = "Total level:<br>";
 
-	private static int
-			prayerX = 0,
-			prayerY = 0,
-			magicX = 0,
-			magicY = 0,
-			craftingX = 0,
-			craftingY = 0,
-			runecraftingX = 0,
-			runecraftingY = 0,
-			woodcuttingX = 0,
-			woodcuttingY = 0,
-			totalX = 0,
-			totalY = 0;
+	private static final Map<WidgetInfo, SkillWidgetSwapTracker> SKILL_WIDGET_SWAP_TRACKER;
+
+	static
+	{
+		SKILL_WIDGET_SWAP_TRACKER = new LinkedHashMap<>();
+		SKILL_WIDGET_SWAP_TRACKER.put(WidgetInfo.SKILL_WOODCUTTING, new SkillWidgetSwapTracker(WidgetInfo.SKILL_TOTAL));
+		SKILL_WIDGET_SWAP_TRACKER.put(WidgetInfo.SKILL_PRAYER, new SkillWidgetSwapTracker(WidgetInfo.SKILL_MAGIC));
+		SKILL_WIDGET_SWAP_TRACKER.put(WidgetInfo.SKILL_CRAFTING, new SkillWidgetSwapTracker(WidgetInfo.SKILL_WOODCUTTING));
+		SKILL_WIDGET_SWAP_TRACKER.put(WidgetInfo.SKILL_AGILITY, new SkillWidgetSwapTracker(WidgetInfo.SKILL_PRAYER));
+		SKILL_WIDGET_SWAP_TRACKER.put(WidgetInfo.SKILL_HERBLORE, new SkillWidgetSwapTracker(WidgetInfo.SKILL_CRAFTING));
+		SKILL_WIDGET_SWAP_TRACKER.put(WidgetInfo.SKILL_THIEVING, new SkillWidgetSwapTracker(WidgetInfo.SKILL_RUNECRAFTING));
+	}
 
 	@Inject
 	private VirtualLevelsConfig config;
@@ -211,19 +211,33 @@ public class VirtualLevelsPlugin extends Plugin
 		{
 			return;
 		}
-		//sets original location of widgets if not already set
-		prayerX = prayerX > 0 ? prayerX : client.getWidget(WidgetInfo.SKILL_PRAYER).getRelativeX();
-		prayerY = prayerY > 0 ? prayerY : client.getWidget(WidgetInfo.SKILL_PRAYER).getRelativeY();
-		magicX = magicX > 0 ? magicX : client.getWidget(WidgetInfo.SKILL_MAGIC).getRelativeX();
-		magicY = magicY > 0 ? magicY : client.getWidget(WidgetInfo.SKILL_MAGIC).getRelativeY();
-		craftingX = craftingX > 0 ? craftingX : client.getWidget(WidgetInfo.SKILL_CRAFTING).getRelativeX();
-		craftingY = craftingY > 0 ? craftingY : client.getWidget(WidgetInfo.SKILL_CRAFTING).getRelativeY();
-		runecraftingX = runecraftingX > 0 ? runecraftingX : client.getWidget(WidgetInfo.SKILL_RUNECRAFTING).getRelativeX();
-		runecraftingY = runecraftingY > 0 ? runecraftingY : client.getWidget(WidgetInfo.SKILL_RUNECRAFTING).getRelativeY();
-		woodcuttingX = woodcuttingX > 0 ? woodcuttingX : client.getWidget(WidgetInfo.SKILL_WOODCUTTING).getRelativeX();
-		woodcuttingY = woodcuttingY > 0 ? woodcuttingY : client.getWidget(WidgetInfo.SKILL_WOODCUTTING).getRelativeY();
-		totalX = totalX > 0 ? totalX : client.getWidget(WidgetInfo.SKILL_TOTAL).getRelativeX();
-		totalY = totalY > 0 ? totalY : client.getWidget(WidgetInfo.SKILL_TOTAL).getRelativeY();
+
+		// Update widget and target original positions
+		for (Map.Entry<WidgetInfo, SkillWidgetSwapTracker> entry : SKILL_WIDGET_SWAP_TRACKER.entrySet())
+		{
+			final Widget keyWidget = client.getWidget(entry.getKey());
+			final int keyWidgetX = keyWidget.getRelativeX();
+			final int keyWidgetY = keyWidget.getRelativeY();
+			final SkillWidgetSwapTracker value = entry.getValue();
+			final WidgetInfo valueWidgetInfo = value.getWidgetInfo();
+			final int valueX = value.getX();
+			final int valueY = value.getY();
+
+			final Widget valueWidget = client.getWidget(valueWidgetInfo);
+			final int newValueX = valueX > 0 ? valueX : valueWidget.getRelativeX();
+			final int newValueY = valueY > 0 ? valueY : valueWidget.getRelativeY();
+			if (valueX != newValueX && valueY != newValueY)
+			{
+				SKILL_WIDGET_SWAP_TRACKER.put(
+					entry.getKey(),
+					new SkillWidgetSwapTracker(
+						valueWidgetInfo,
+						newValueX,
+						newValueY,
+						keyWidgetX,
+						keyWidgetY));
+			}
+		}
 
 		for (Widget widget : getMemberSkills())
 		{
@@ -232,32 +246,24 @@ public class VirtualLevelsPlugin extends Plugin
 				widget.setHidden(enabled);
 			}
 		}
-		//move some free-to-play skills into member skill locations to fill the gaps
-		if (enabled)
-		{
-			int agilityX = client.getWidget(WidgetInfo.SKILL_AGILITY).getRelativeX(),
-				agilityY = client.getWidget(WidgetInfo.SKILL_AGILITY).getRelativeY(),
-				herbloreX = client.getWidget(WidgetInfo.SKILL_HERBLORE).getRelativeX(),
-				herbloreY = client.getWidget(WidgetInfo.SKILL_HERBLORE).getRelativeY(),
-				thievingX = client.getWidget(WidgetInfo.SKILL_THIEVING).getRelativeX(),
-				thievingY = client.getWidget(WidgetInfo.SKILL_THIEVING).getRelativeY();
 
-			setWidgetRelativePosition(WidgetInfo.SKILL_TOTAL, woodcuttingX, woodcuttingY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_MAGIC, prayerX, prayerY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_WOODCUTTING, craftingX, craftingY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_PRAYER, agilityX, agilityY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_CRAFTING, herbloreX, herbloreY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_RUNECRAFTING, thievingX, thievingY);
-		}
-		//move all skills back to original positions
-		else
+		for (Map.Entry<WidgetInfo, SkillWidgetSwapTracker> entry : SKILL_WIDGET_SWAP_TRACKER.entrySet())
 		{
-			setWidgetRelativePosition(WidgetInfo.SKILL_TOTAL, totalX, totalY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_MAGIC, magicX, magicY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_WOODCUTTING, woodcuttingX, woodcuttingY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_PRAYER, prayerX, prayerY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_CRAFTING, craftingX, craftingY);
-			setWidgetRelativePosition(WidgetInfo.SKILL_RUNECRAFTING, runecraftingX, runecraftingY);
+			final SkillWidgetSwapTracker value = entry.getValue();
+			if (enabled)
+			{
+				setWidgetRelativePosition(
+					value.getWidgetInfo(),
+					value.getTargetX(),
+					value.getTargetY());
+			}
+			else
+			{
+				setWidgetRelativePosition(
+					value.getWidgetInfo(),
+					value.getX(),
+					value.getY());
+			}
 		}
 	}
 
