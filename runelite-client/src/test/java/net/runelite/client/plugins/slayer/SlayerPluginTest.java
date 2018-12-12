@@ -30,6 +30,8 @@ import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import javax.inject.Inject;
 import static net.runelite.api.ChatMessageType.SERVER;
 import net.runelite.api.Client;
+import net.runelite.api.Player;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.widgets.Widget;
@@ -54,6 +56,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class SlayerPluginTest
 {
 	private static final String TASK_NEW = "Your new task is to kill 231 Suqahs.";
+	private static final String TASK_NEW_FIRST = "We'll start you off hunting goblins, you'll need to kill 17 of them.";
 	private static final String TASK_NEW_NPC_CONTACT = "Excellent, you're doing great. Your new task is to kill<br>211 Suqahs.";
 	private static final String TASK_NEW_FROM_PARTNER = "You have received a new Slayer assignment from breaklulz: Dust Devils (377)";
 	private static final String TASK_CHECKSLAYERGEM_WILDERNESS = "You're assigned to kill Suqahs in the Wilderness; only 211 more to go.";
@@ -142,6 +145,18 @@ public class SlayerPluginTest
 
 		assertEquals("Suqahs", slayerPlugin.getTaskName());
 		assertEquals(231, slayerPlugin.getAmount());
+	}
+
+	@Test
+	public void testFirstTask()
+	{
+		Widget npcDialog = mock(Widget.class);
+		when(npcDialog.getText()).thenReturn(TASK_NEW_FIRST);
+		when(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT)).thenReturn(npcDialog);
+		slayerPlugin.onGameTick(new GameTick());
+
+		assertEquals("goblins", slayerPlugin.getTaskName());
+		assertEquals(17, slayerPlugin.getAmount());
 	}
 
 	@Test
@@ -324,7 +339,7 @@ public class SlayerPluginTest
 	}
 
 	@Test
-	public void testBracletSlaughter()
+	public void testBraceletSlaughter()
 	{
 		ChatMessage chatMessageEvent = new ChatMessage(SERVER, "", BRACLET_SLAUGHTER, null);
 
@@ -422,6 +437,10 @@ public class SlayerPluginTest
 	@Test
 	public void testCombatBraceletUpdate()
 	{
+		final Player player = mock(Player.class);
+		when(player.getLocalLocation()).thenReturn(new LocalPoint(0, 0));
+		when(client.getLocalPlayer()).thenReturn(player);
+
 		slayerPlugin.setTaskName("Suqahs");
 		slayerPlugin.setAmount(231);
 
@@ -429,6 +448,7 @@ public class SlayerPluginTest
 		slayerPlugin.onChatMessage(chatMessage);
 
 		assertEquals("Suqahs", slayerPlugin.getTaskName());
+		slayerPlugin.killedOne();
 		assertEquals(30, slayerPlugin.getAmount());
 	}
 }

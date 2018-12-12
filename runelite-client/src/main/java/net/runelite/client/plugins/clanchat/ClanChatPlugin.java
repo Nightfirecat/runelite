@@ -28,7 +28,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.Subscribe;
 import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +45,11 @@ import net.runelite.api.events.VarClientStrChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ClanManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.util.Text;
 
 @PluginDescriptor(
 	name = "Clan Chat",
@@ -213,6 +214,8 @@ public class ClanChatPlugin extends Plugin
 		{
 			return;
 		}
+
+		s = Text.toJagexName(s);
 
 		chats.removeIf(s::equalsIgnoreCase);
 		chats.add(s);

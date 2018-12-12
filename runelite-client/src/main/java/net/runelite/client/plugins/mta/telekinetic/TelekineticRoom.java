@@ -24,7 +24,6 @@
  */
 package net.runelite.client.plugins.mta.telekinetic;
 
-import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
@@ -61,6 +60,7 @@ import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.WallObjectSpawned;
 import net.runelite.api.widgets.WidgetID;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.mta.MTAConfig;
 import net.runelite.client.plugins.mta.MTARoom;
 

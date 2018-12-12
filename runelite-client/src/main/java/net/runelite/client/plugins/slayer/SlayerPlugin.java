@@ -25,7 +25,7 @@
  */
 package net.runelite.client.plugins.slayer;
 
-import com.google.common.eventbus.Subscribe;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -49,6 +49,7 @@ import net.runelite.api.ItemID;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import static net.runelite.api.Skill.SLAYER;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.ExperienceChanged;
@@ -56,11 +57,13 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
+import net.runelite.api.vars.SlayerUnlock;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -97,10 +100,13 @@ public class SlayerPlugin extends Plugin
 	//NPC messages
 	private static final Pattern NPC_ASSIGN_MESSAGE = Pattern.compile(".*Your new task is to kill\\s*(\\d*) (.*)\\.");
 	private static final Pattern NPC_ASSIGN_BOSS_MESSAGE = Pattern.compile("^Excellent. You're now assigned to kill (?:the )?(.*) (\\d+) times.*Your reward point tally is (.*)\\.$");
+	private static final Pattern NPC_ASSIGN_FIRST_MESSAGE = Pattern.compile("^We'll start you off hunting (.*), you'll need to kill (\\d*) of them.");
 	private static final Pattern NPC_CURRENT_MESSAGE = Pattern.compile("You're still hunting (.*); you have (\\d*) to go\\..*");
 
 	//Reward UI
 	private static final Pattern REWARD_POINTS = Pattern.compile("Reward points: ((?:\\d+,)*\\d+)");
+
+	private static final int GROTESQUE_GUARDIANS_REGION = 6727;
 
 	private static final int EXPEDITIOUS_CHARGE = 30;
 	private static final int SLAUGHTER_CHARGE = 30;
@@ -144,6 +150,10 @@ public class SlayerPlugin extends Plugin
 
 	@Getter(AccessLevel.PACKAGE)
 	@Setter(AccessLevel.PACKAGE)
+	private int initialAmount;
+
+	@Getter(AccessLevel.PACKAGE)
+	@Setter(AccessLevel.PACKAGE)
 	private int expeditiousChargeCount;
 
 	@Getter(AccessLevel.PACKAGE)
@@ -181,7 +191,7 @@ public class SlayerPlugin extends Plugin
 			streak = config.streak();
 			setExpeditiousChargeCount(config.expeditious());
 			setSlaughterChargeCount(config.slaughter());
-			clientThread.invoke(() -> setTask(config.taskName(), config.amount()));
+			clientThread.invoke(() -> setTask(config.taskName(), config.amount(), config.initialAmount()));
 		}
 	}
 
@@ -202,7 +212,7 @@ public class SlayerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onGameStateChange(GameStateChanged event)
+	public void onGameStateChanged(GameStateChanged event)
 	{
 		switch (event.getGameState())
 		{
@@ -223,7 +233,7 @@ public class SlayerPlugin extends Plugin
 					streak = config.streak();
 					setExpeditiousChargeCount(config.expeditious());
 					setSlaughterChargeCount(config.slaughter());
-					setTask(config.taskName(), config.amount());
+					setTask(config.taskName(), config.amount(), config.initialAmount());
 					loginFlag = false;
 				}
 				break;
@@ -233,6 +243,7 @@ public class SlayerPlugin extends Plugin
 	private void save()
 	{
 		config.amount(amount);
+		config.initialAmount(initialAmount);
 		config.taskName(taskName);
 		config.points(points);
 		config.streak(streak);
@@ -265,21 +276,30 @@ public class SlayerPlugin extends Plugin
 		{
 			String npcText = Text.sanitizeMultilineText(npcDialog.getText()); //remove color and linebreaks
 			final Matcher mAssign = NPC_ASSIGN_MESSAGE.matcher(npcText); //number, name
+			final Matcher mAssignFirst = NPC_ASSIGN_FIRST_MESSAGE.matcher(npcText); //name, number
 			final Matcher mAssignBoss = NPC_ASSIGN_BOSS_MESSAGE.matcher(npcText); // name, number, points
 			final Matcher mCurrent = NPC_CURRENT_MESSAGE.matcher(npcText); //name, number
 
 			if (mAssign.find())
 			{
-				setTask(mAssign.group(2), Integer.parseInt(mAssign.group(1)));
+				int amount = Integer.parseInt(mAssign.group(1));
+				setTask(mAssign.group(2), amount, amount);
+			}
+			else if (mAssignFirst.find())
+			{
+				int amount = Integer.parseInt(mAssignFirst.group(2));
+				setTask(mAssignFirst.group(1), amount, amount);
 			}
 			else if (mAssignBoss.find())
 			{
-				setTask(mAssignBoss.group(1), Integer.parseInt(mAssignBoss.group(2)));
+				int amount = Integer.parseInt(mAssignBoss.group(2));
+				setTask(mAssignBoss.group(1), amount, amount);
 				points = Integer.parseInt(mAssignBoss.group(3).replaceAll(",", ""));
 			}
 			else if (mCurrent.find())
 			{
-				setTask(mCurrent.group(1), Integer.parseInt(mCurrent.group(2)));
+				int amount = Integer.parseInt(mCurrent.group(2));
+				setTask(mCurrent.group(1), amount, amount);
 			}
 		}
 
@@ -402,13 +422,13 @@ public class SlayerPlugin extends Plugin
 				default:
 					log.warn("Unreachable default case for message ending in '; return to Slayer master'");
 			}
-			setTask("", 0);
+			setTask("", 0, 0);
 			return;
 		}
 
 		if (chatMsg.equals(CHAT_GEM_COMPLETE_MESSAGE) || chatMsg.equals(CHAT_CANCEL_MESSAGE) || chatMsg.equals(CHAT_CANCEL_MESSAGE_JAD))
 		{
-			setTask("", 0);
+			setTask("", 0, 0);
 			return;
 		}
 
@@ -424,7 +444,7 @@ public class SlayerPlugin extends Plugin
 		{
 			String gemTaskName = mProgress.group(1);
 			int gemAmount = Integer.parseInt(mProgress.group(2));
-			setTask(gemTaskName, gemAmount);
+			setTask(gemTaskName, gemAmount, initialAmount);
 			return;
 		}
 
@@ -433,8 +453,10 @@ public class SlayerPlugin extends Plugin
 		if (bracerProgress.find())
 		{
 			final int taskAmount = Integer.parseInt(bracerProgress.group(1));
-			setTask(taskName, taskAmount);
-			return;
+			setTask(taskName, taskAmount, initialAmount);
+
+			// Avoid race condition (combat brace message goes through first before XP drop)
+			amount++;
 		}
 	}
 
@@ -482,7 +504,8 @@ public class SlayerPlugin extends Plugin
 		}
 	}
 
-	private void killedOne()
+	@VisibleForTesting
+	void killedOne()
 	{
 		if (amount == 0)
 		{
@@ -490,6 +513,11 @@ public class SlayerPlugin extends Plugin
 		}
 
 		amount--;
+		if (doubleTroubleExtraKill())
+		{
+			amount--;
+		}
+
 		config.amount(amount); // save changed value
 
 		if (!config.showInfobox())
@@ -501,6 +529,12 @@ public class SlayerPlugin extends Plugin
 		addCounter();
 		counter.setText(String.valueOf(amount));
 		infoTimer = Instant.now();
+	}
+
+	private boolean doubleTroubleExtraKill()
+	{
+		return WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation()).getRegionID() == GROTESQUE_GUARDIANS_REGION &&
+				SlayerUnlock.GROTESQUE_GARDIAN_DOUBLE_COUNT.isEnabled(client);
 	}
 
 	private boolean isTarget(NPC npc)
@@ -559,10 +593,11 @@ public class SlayerPlugin extends Plugin
 		}
 	}
 
-	private void setTask(String name, int amt)
+	private void setTask(String name, int amt, int initAmt)
 	{
 		taskName = name;
 		amount = amt;
+		initialAmount = initAmt;
 		save();
 		removeCounter();
 		addCounter();
@@ -588,11 +623,19 @@ public class SlayerPlugin extends Plugin
 		}
 
 		BufferedImage taskImg = itemManager.getImage(itemSpriteId);
-		final String taskTooltip = ColorUtil.prependColorTag("%s</br>", new Color(255, 119, 0))
+		String taskTooltip = ColorUtil.prependColorTag("%s</br>", new Color(255, 119, 0))
 			+ ColorUtil.wrapWithColorTag("Pts:", Color.YELLOW)
 			+ " %s</br>"
 			+ ColorUtil.wrapWithColorTag("Streak:", Color.YELLOW)
 			+ " %s";
+
+		if (initialAmount > 0)
+		{
+			taskTooltip += "</br>"
+				+ ColorUtil.wrapWithColorTag("Start:", Color.YELLOW)
+				+ " " + initialAmount;
+		}
+
 		counter = new TaskCounter(taskImg, this, amount);
 		counter.setTooltip(String.format(taskTooltip, capsString(taskName), points, streak));
 

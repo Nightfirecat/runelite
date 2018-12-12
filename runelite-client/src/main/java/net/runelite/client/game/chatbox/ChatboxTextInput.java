@@ -51,6 +51,7 @@ import net.runelite.api.widgets.WidgetTextAlignment;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.input.KeyListener;
 import net.runelite.client.input.MouseListener;
+import net.runelite.client.util.Text;
 
 @Slf4j
 public class ChatboxTextInput extends ChatboxInput implements KeyListener, MouseListener
@@ -120,10 +121,7 @@ public class ChatboxTextInput extends ChatboxInput implements KeyListener, Mouse
 	public ChatboxTextInput value(String value)
 	{
 		this.value = new StringBuffer(value);
-		if (built)
-		{
-			clientThread.invoke(this::update);
-		}
+		cursorAt(this.value.length());
 		return this;
 	}
 
@@ -236,9 +234,9 @@ public class ChatboxTextInput extends ChatboxInput implements KeyListener, Mouse
 	{
 		Widget container = chatboxPanelManager.getContainerWidget();
 
-		String lt = value.substring(0, this.cursor);
-		String mt = value.substring(this.cursor, this.cursorEnd);
-		String rt = value.substring(this.cursorEnd);
+		String lt = Text.escapeJagex(value.substring(0, this.cursor));
+		String mt = Text.escapeJagex(value.substring(this.cursor, this.cursorEnd));
+		String rt = Text.escapeJagex(value.substring(this.cursorEnd));
 
 		Widget leftText = container.createChild(-1, WidgetType.TEXT);
 		Widget cursor = container.createChild(-1, WidgetType.RECTANGLE);
@@ -283,11 +281,13 @@ public class ChatboxTextInput extends ChatboxInput implements KeyListener, Mouse
 		else
 		{
 			cursor.setTextColor(0xFFFFFF);
+			long start = System.currentTimeMillis();
 			cursor.setOnTimerListener((JavaScriptCallback) ev ->
 			{
-				boolean on = System.currentTimeMillis() % CURSOR_FLASH_RATE_MILLIS > (CURSOR_FLASH_RATE_MILLIS / 2);
+				boolean on = (System.currentTimeMillis() - start) % CURSOR_FLASH_RATE_MILLIS > (CURSOR_FLASH_RATE_MILLIS / 2);
 				cursor.setOpacity(on ? 255 : 0);
 			});
+			cursor.setHasListener(true);
 		}
 		cursor.setFilled(true);
 		cursor.setOriginalX(mtx - 1);
@@ -321,6 +321,11 @@ public class ChatboxTextInput extends ChatboxInput implements KeyListener, Mouse
 		isInBounds = ev -> bounds.contains(ev.getPoint());
 		getCharOffset = ev ->
 		{
+			if (fullWidth <= 0)
+			{
+				return 0;
+			}
+
 			int cx = ev.getX() - canvasX;
 
 			int charIndex = (tsValue.length() * cx) / fullWidth;
@@ -328,9 +333,9 @@ public class ChatboxTextInput extends ChatboxInput implements KeyListener, Mouse
 			// `i` is used to track max execution time incase there is a font with ligature width data that causes this to fail
 			for (int i = tsValue.length(); i >= 0 && charIndex >= 0 && charIndex <= tsValue.length(); i--)
 			{
-				int lcx = charIndex > 0 ? font.getTextWidth(tsValue.substring(0, charIndex - 1)) : 0;
-				int mcx = font.getTextWidth(tsValue.substring(0, charIndex));
-				int rcx = charIndex + 1 <= tsValue.length() ? font.getTextWidth(tsValue.substring(0, charIndex + 1)) : mcx;
+				int lcx = charIndex > 0 ? font.getTextWidth(Text.escapeJagex(tsValue.substring(0, charIndex - 1))) : 0;
+				int mcx = font.getTextWidth(Text.escapeJagex(tsValue.substring(0, charIndex)));
+				int rcx = charIndex + 1 <= tsValue.length() ? font.getTextWidth(Text.escapeJagex(tsValue.substring(0, charIndex + 1))) : mcx;
 
 				int leftBound = (lcx + mcx) / 2;
 				int rightBound = (mcx + rcx) / 2;

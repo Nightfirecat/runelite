@@ -25,7 +25,6 @@
 package net.runelite.client.plugins.pestcontrol;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +38,7 @@ import net.runelite.api.Client;
 import net.runelite.api.NPC;
 import net.runelite.api.NpcID;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.client.plugins.Plugin;
