@@ -22,37 +22,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.api;
+package net.runelite.api.widgets;
 
-import java.awt.Canvas;
-
-/**
- * Represents the client game engine.
- */
-public interface GameEngine
+public final class WidgetType
 {
-	/**
-	 * Gets the canvas that contains everything.
-	 *
-	 * @return the game canvas
-	 */
-	Canvas getCanvas();
-
-	/**
-	 * Gets the client main thread.
-	 *
-	 * @return the main thread
-	 */
-	Thread getClientThread();
-
-	/**
-	 * Checks whether this code is executing on the client main thread.
-	 *
-	 * @return true if on the main thread, false otherwise
-	 */
-	boolean isClientThread();
-
-	void resizeCanvas();
-
-	void setReplaceCanvasNextFrame(boolean replace);
+	public static final int LAYER = 0;
+	public static final int RECTANGLE = 3;
+	public static final int TEXT = 4;
+	public static final int GRAPHIC = 5;
+	public static final int MODEL = 6;
+	public static final int LINE = 9;
 }
