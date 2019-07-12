@@ -222,6 +222,8 @@ public class FairyRingPlugin extends Plugin
 
 	private void updateFilter(String filter)
 	{
+		// This should be done by updating script 402:
+		// https://github.com/RuneStar/cs2-scripts/blob/master/scripts/%5Bclientscript,fairyrings_sort_update%5D.cs2
 		filter = filter.toLowerCase();
 		final Widget list = client.getWidget(WidgetInfo.FAIRY_RING_LIST);
 		final Widget favorites = client.getWidget(WidgetInfo.FAIRY_RING_FAVORITES);
