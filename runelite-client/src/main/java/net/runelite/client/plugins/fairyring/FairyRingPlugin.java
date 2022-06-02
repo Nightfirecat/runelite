@@ -28,14 +28,8 @@
 
 package net.runelite.client.plugins.fairyring;
 
-import com.google.common.base.Strings;
 import com.google.inject.Provides;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.ScriptEvent;
@@ -43,6 +37,7 @@ import net.runelite.api.ScriptID;
 import net.runelite.api.SoundEffectID;
 import net.runelite.api.SpriteID;
 import net.runelite.api.Varbits;
+import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
@@ -72,8 +67,6 @@ public class FairyRingPlugin extends Plugin
 	private static final String[] middleDial = {"I", "L", "K", "J"};
 	private static final String[] rightDial = {"P", "S", "R", "Q"};
 
-	private static final int ENTRY_PADDING = 3;
-
 	private static final String MENU_OPEN = "Open";
 	private static final String MENU_CLOSE = "Close";
 
@@ -91,20 +84,6 @@ public class FairyRingPlugin extends Plugin
 
 	private ChatboxTextInput searchInput = null;
 	private Widget searchBtn;
-	private Collection<CodeWidgets> codes = null;
-
-	@Data
-	private static class CodeWidgets
-	{
-		// The fairy hideout has both of these null, because its not the same as the rest of them
-		@Nullable
-		private Widget favorite;
-
-		@Nullable
-		private Widget code;
-
-		private Widget description;
-	}
 
 	@Provides
 	FairyRingConfig getConfig(ConfigManager configManager)
@@ -140,8 +119,6 @@ public class FairyRingPlugin extends Plugin
 				searchBtn.setName("Search");
 				searchBtn.revalidate();
 
-				codes = null;
-
 				if (config.autoOpen())
 				{
 					openSearch();
@@ -158,7 +135,6 @@ public class FairyRingPlugin extends Plugin
 
 	private void menuClose(ScriptEvent e)
 	{
-		updateFilter("");
 		chatboxPanelManager.close();
 		client.playSoundEffect(SoundEffectID.UI_BOOP);
 	}
@@ -191,19 +167,19 @@ public class FairyRingPlugin extends Plugin
 
 	private void openSearch()
 	{
-		updateFilter("");
 		searchBtn.setAction(1, MENU_CLOSE);
 		searchBtn.setOnOpListener((JavaScriptCallback) this::menuClose);
 		searchInput = chatboxPanelManager.openTextInput("Filter fairy rings")
-			.onChanged(s -> clientThread.invokeLater(() -> updateFilter(s)))
+			.onChanged(s -> clientThread.invokeLater(this::updateFilter))
 			.onDone(s -> false)
 			.onClose(() ->
 			{
-				clientThread.invokeLater(() -> updateFilter(""));
+				clientThread.invokeLater(this::updateFilter);
 				searchBtn.setOnOpListener((JavaScriptCallback) this::menuOpen);
 				searchBtn.setAction(1, MENU_OPEN);
 			})
 			.build();
+		updateFilter();
 	}
 
 	@Subscribe
@@ -220,150 +196,108 @@ public class FairyRingPlugin extends Plugin
 		}
 	}
 
-	private void updateFilter(String filter)
+	@Subscribe
+	void onScriptCallbackEvent(ScriptCallbackEvent e)
 	{
-		// This should be done by updating script 402:
-		// https://github.com/RuneStar/cs2-scripts/blob/master/scripts/%5Bclientscript,fairyrings_sort_update%5D.cs2
-		filter = filter.toLowerCase();
-		final Widget list = client.getWidget(WidgetInfo.FAIRY_RING_LIST);
-		final Widget favorites = client.getWidget(WidgetInfo.FAIRY_RING_FAVORITES);
-
-		if (list == null)
+		switch (e.getEventName())
 		{
-			return;
-		}
-
-		if (codes != null)
-		{
-			// Check to make sure the list hasn't been rebuild since we were last her
-			// Do this by making sure the list's dynamic children are the same as when we last saw them
-			if (codes.stream().noneMatch(w ->
+			case "pinnedFairyRingBuild":
+			case "fairyRingVisitedCheck":
+			case "fairyTalePt2RingCheck":
 			{
-				Widget codeWidget = w.getCode();
-				if (codeWidget == null)
+				final String[] stringStack = client.getStringStack();
+				final int stringStackSize = client.getStringStackSize();
+				final String ringCode = stringStack[stringStackSize - 1];
+				final String ringDescription = stringStack[stringStackSize - 2];
+
+				// Hide fairy ring widget if neither the code nor description match the filter term
+				if (!permitCode(ringCode) && !permitDescription(ringDescription))
 				{
-					return false;
-				}
-				return list.getChild(codeWidget.getIndex()) == codeWidget;
-			}))
-			{
-				codes = null;
-			}
-		}
-
-		if (codes == null)
-		{
-			// Find all of the widgets that we care about, grouping by their Y value
-			Map<Integer, CodeWidgets> codeMap = new TreeMap<>();
-
-			for (Widget w : list.getStaticChildren())
-			{
-				if (w.isSelfHidden())
-				{
-					continue;
+					client.getIntStack()[client.getIntStackSize() - 1] = 0;
 				}
 
-				if (w.getSpriteId() != -1)
-				{
-					codeMap.computeIfAbsent(w.getRelativeY(), k -> new CodeWidgets()).setFavorite(w);
-				}
-				else if (!Strings.isNullOrEmpty(w.getText()))
-				{
-					codeMap.computeIfAbsent(w.getRelativeY(), k -> new CodeWidgets()).setDescription(w);
-				}
+				break;
 			}
-
-			for (Widget w : list.getDynamicChildren())
-			{
-				if (w.isSelfHidden())
-				{
-					continue;
-				}
-
-				CodeWidgets c = codeMap.computeIfAbsent(w.getRelativeY(), k -> new CodeWidgets());
-				c.setCode(w);
-			}
-
-			codes = codeMap.values();
 		}
+	}
 
-		// Relayout the panel
-		int y = 0;
-
-		if (favorites != null)
+	/**
+	 *
+	 * @param ringCode
+	 * @return
+	 */
+	private boolean permitCode(final String ringCode)
+	{
+		if (searchInput == null)
 		{
-			boolean hide = !filter.isEmpty();
-			favorites.setHidden(hide);
-			if (!hide)
-			{
-				y += favorites.getOriginalHeight() + ENTRY_PADDING;
-			}
+			return true;
 		}
 
-		for (CodeWidgets c : codes)
+		final String filter = searchInput.getValue().toLowerCase();
+
+		if (filter.isEmpty())
 		{
-			String code = Text.removeTags(c.getDescription().getName()).replaceAll(" ", "");
-			String tags = null;
-
-			if (!code.isEmpty())
-			{
-				try
-				{
-					FairyRings ring = FairyRings.valueOf(code);
-					tags = ring.getTags();
-				}
-				catch (IllegalArgumentException e)
-				{
-					log.warn("Unable to find ring with code '{}'", code, e);
-				}
-			}
-
-			boolean hidden = !(filter.isEmpty()
-				|| Text.removeTags(c.getDescription().getText()).toLowerCase().contains(filter)
-				|| code.toLowerCase().contains(filter)
-				|| tags != null && tags.contains(filter));
-
-			if (c.getCode() != null)
-			{
-				c.getCode().setHidden(hidden);
-				c.getCode().setOriginalY(y);
-			}
-
-			if (c.getFavorite() != null)
-			{
-				c.getFavorite().setHidden(hidden);
-				c.getFavorite().setOriginalY(y);
-			}
-
-			c.getDescription().setHidden(hidden);
-			c.getDescription().setOriginalY(y);
-
-			if (!hidden)
-			{
-				y += c.getDescription().getHeight() + ENTRY_PADDING;
-			}
+			return true;
 		}
 
-		y -= ENTRY_PADDING;
+		final String code = Text.removeTags(ringCode).replaceAll(" ", "");
 
-		if (y < 0)
+		if (code.isEmpty())
 		{
-			y = 0;
+			return false;
 		}
 
-		int newHeight = 0;
-		if (list.getScrollHeight() > 0)
+		final String tags;
+
+		try
 		{
-			newHeight = (list.getScrollY() * y) / list.getScrollHeight();
+			FairyRings ring = FairyRings.valueOf(code);
+
+			if (filter.equalsIgnoreCase(code))
+			{
+				return true;
+			}
+
+			tags = ring.getTags();
+		}
+		catch (IllegalArgumentException e)
+		{
+			log.warn("Unable to find ring with code '{}'", code, e);
+			return false;
 		}
 
-		list.setScrollHeight(y);
-		list.revalidateScroll();
+		return permitDescription(tags);
+	}
+
+	/**
+	 *
+	 * @param ringDescription
+	 * @return
+	 */
+	private boolean permitDescription(final String ringDescription)
+	{
+		if (searchInput == null)
+		{
+			return true;
+		}
+
+		final String filter = searchInput.getValue().toLowerCase();
+
+		return filter.isEmpty() || Text.removeTags(ringDescription).contains(filter);
+	}
+
+	// TODO: rename this function
+	private void updateFilter()
+	{
+		assert client.isClientThread();
+
 		client.runScript(
-			ScriptID.UPDATE_SCROLLBAR,
-			WidgetInfo.FAIRY_RING_LIST_SCROLLBAR.getId(),
+			ScriptID.FAIRYRINGS_SORT_UPDATE,
 			WidgetInfo.FAIRY_RING_LIST.getId(),
-			newHeight
+			WidgetInfo.FAIRY_RING_LIST_SCROLLBAR.getId(),
+			1, // non-sort update
+			WidgetInfo.FAIRY_RING_LIST_SEPARATOR.getId(),
+			WidgetInfo.FAIRY_RING_FAVORITES.getId()
 		);
 	}
 }

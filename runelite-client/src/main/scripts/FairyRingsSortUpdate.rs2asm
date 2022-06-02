@@ -113,6 +113,20 @@ LABEL78:
    iload                  11
    enum
    istore                 6
+   iload                  5 ; fairy ring code widget, eg. "AIQ"
+   if_gettext               ; get code text
+   iload                  7 ; fairy ring description widget, eg. "Asgarnia: Mudskipper Point"
+   if_gettext               ; get description text
+   iconst                 1 ; skip adding this fairy ring (1 = allow it, 0 = skip it)
+   sconst                 "pinnedFairyRingBuild"
+   runelite_callback
+   pop_string               ; pop fairy ring description
+   pop_string               ; pop fairy ring code
+   pop_int                  ; pop skip var
+   iconst                 1
+   if_icmpeq              PINNEDRINGNULLCHECK
+   jump                   LABEL200
+PINNEDRINGNULLCHECK:
    iload                  5
    iconst                 -1
    if_icmpne              LABEL100
@@ -288,6 +302,20 @@ LABEL246:
    if_icmpgt              LABEL258
    jump                   LABEL276
 LABEL258:
+   iload                  14; fairy ring code widget, eg. "AIQ"
+   if_gettext               ; get code text
+   iload                  6 ; fairy ring description widget, eg. "Asgarnia: Mudskipper Point"
+   if_gettext               ; get description text
+   iconst                 1 ; skip adding this fairy ring (1 = allow it, 0 = skip it)
+   sconst                 "fairyRingVisitedCheck"
+   runelite_callback
+   pop_string               ; pop fairy ring description
+   pop_string               ; pop fairy ring code
+   pop_int                  ; pop skip var
+   iconst                 1
+   if_icmpeq              FAIRYRINGVISITED
+   jump                   LABEL286
+FAIRYRINGVISITED:
    iconst                 0
    iload                  14
    if_sethide
@@ -483,7 +511,19 @@ LABEL432:
    sload                  0
    string_length
    iconst                 0
-   if_icmpgt              LABEL440
+   if_icmpgt              FAIRYTALEPT2FILTER
+   jump                   LABEL486
+FAIRYTALEPT2FILTER:
+   sconst                 ""; empty string--fairy tale pt2 widget is all one text widget, so no dedicated ring code exists
+   sload                  0 ; get fairy ring code sequence and description widget
+   iconst                 1 ; skip adding this fairy ring (1 = allow it, 0 = skip it)
+   sconst                 "fairyTalePt2RingCheck"
+   runelite_callback
+   pop_string               ; pop fairy ring code & description
+   pop_string               ; pop empty fairy ring code
+   pop_int                  ; pop skip var
+   iconst                 1
+   if_icmpeq              LABEL440
    jump                   LABEL486
 LABEL440:
    iconst                 0

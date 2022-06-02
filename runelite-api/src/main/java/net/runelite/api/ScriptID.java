@@ -383,4 +383,16 @@ public final class ScriptID
 	 */
 	@ScriptArguments(integer = 6)
 	public static final int TRADE_MAIN_INIT = 755;
+
+	/**
+	 * <ul>
+	 * <li>int (WidgetID) {@link net.runelite.api.widgets.WidgetInfo#FAIRY_RING_LIST} </li> component0 24969224
+	 * <li>int (WidgetID) {@link net.runelite.api.widgets.WidgetInfo#FAIRY_RING_LIST_SCROLLBAR}</li> component1 24969225
+	 * <li>int sort changed (1 = no, 0 = yes)</li>
+	 * <li>int (WidgetID) {@link net.runelite.api.widgets.WidgetInfo#FAIRY_RING_LIST_SEPARATOR}</li> component3 24969368
+	 * <li>int (WidgetID) {@link net.runelite.api.widgets.WidgetInfo#FAIRY_RING_FAVORITES}</li> component4 24969223
+	 * </ul>
+	 */
+	@ScriptArguments(integer = 5)
+	public static final int FAIRYRINGS_SORT_UPDATE = 402;
 }
