@@ -38,10 +38,6 @@ import net.runelite.api.AnimationID;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Constants;
-import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.InventoryID;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemID;
 import static net.runelite.api.ItemID.FIRE_CAPE;
 import static net.runelite.api.ItemID.INFERNAL_CAPE;
@@ -58,7 +54,6 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GraphicChanged;
-import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.VarbitChanged;
@@ -100,7 +95,6 @@ public class TimersPlugin extends Plugin
 	private static final String GOD_WARS_ALTAR_MESSAGE = "you recharge your prayer.";
 	private static final String MAGIC_IMBUE_EXPIRED_MESSAGE = "Your Magic Imbue charge has ended.";
 	private static final String MAGIC_IMBUE_MESSAGE = "You are charged to combine runes!";
-	private static final String STAFF_OF_THE_DEAD_SPEC_EXPIRED_MESSAGE = "Your protection fades away";
 	private static final String STAFF_OF_THE_DEAD_SPEC_MESSAGE = "Spirits of deceased evildoers offer you their protection";
 	private static final String SUPER_ANTIFIRE_DRINK_MESSAGE = "You drink some of your super antifire potion";
 	private static final String SUPER_ANTIFIRE_EXPIRED_MESSAGE = "<col=7f007f>Your super antifire potion has expired.</col>";
@@ -670,11 +664,6 @@ public class TimersPlugin extends Plugin
 			createGameTimer(STAFF_OF_THE_DEAD);
 		}
 
-		if (config.showStaffOfTheDead() && message.contains(STAFF_OF_THE_DEAD_SPEC_EXPIRED_MESSAGE))
-		{
-			removeGameTimer(STAFF_OF_THE_DEAD);
-		}
-
 		if (config.showFreezes() && message.equals(FROZEN_MESSAGE))
 		{
 			freezeTimer = createGameTimer(ICEBARRAGE);
@@ -1026,32 +1015,6 @@ public class TimersPlugin extends Plugin
 				}
 			}
 		}
-	}
-
-	/**
-	 * Remove SOTD timer when equipment is changed.
-	 */
-	@Subscribe
-	public void onItemContainerChanged(ItemContainerChanged itemContainerChanged)
-	{
-		if (itemContainerChanged.getContainerId() != InventoryID.EQUIPMENT.getId())
-		{
-			return;
-		}
-
-		ItemContainer container = itemContainerChanged.getItemContainer();
-
-		Item weapon = container.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
-		if (weapon == null ||
-			(weapon.getId() != ItemID.STAFF_OF_THE_DEAD &&
-				weapon.getId() != ItemID.TOXIC_STAFF_OF_THE_DEAD &&
-				weapon.getId() != ItemID.STAFF_OF_LIGHT &&
-				weapon.getId() != ItemID.TOXIC_STAFF_UNCHARGED))
-		{
-			// remove sotd timer if the staff has been unwielded
-			removeGameTimer(STAFF_OF_THE_DEAD);
-		}
-
 	}
 
 	@Subscribe
