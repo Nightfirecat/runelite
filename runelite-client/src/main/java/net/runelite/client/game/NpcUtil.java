@@ -138,6 +138,9 @@ public class NpcUtil
 			case NpcID.ENT_7234:
 			case NpcID.HOPELESS_CREATURE:
 			case NpcID.HOPELESS_CREATURE_1073:
+			// Agrith-Naar triggers some dialog upon being dealt a killing blow (and can regenerate health if dealt a
+			// killing blow with a weapon besides the black-dyed Silverlight), so should not be hidden in any situation.
+			case NpcID.AGRITH_NAAR:
 				return false;
 			// These NPCs have no attack options, but are the dead and uninteractable form of otherwise attackable NPCs,
 			// thus should not be considered alive.
