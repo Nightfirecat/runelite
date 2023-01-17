@@ -823,7 +823,8 @@ public class TimersPlugin extends Plugin
 			{
 				// by default the thrall lasts 1 tick per magic level
 				int t = client.getBoostedSkillLevel(Skill.MAGIC);
-				// ca tiers being completed boosts this
+
+				// ca tiers being completed boost this
 				if (client.getVarbitValue(Varbits.COMBAT_ACHIEVEMENT_TIER_GRANDMASTER) == 2)
 				{
 					t += t; // 100% boost
@@ -832,6 +833,10 @@ public class TimersPlugin extends Plugin
 				{
 					t += t / 2; // 50% boost
 				}
+
+				// the summoned time is reduced by 3 ticks (matches [proc,buff_bar_get_value])
+				t -= 3;
+
 				createGameTimer(RESURRECT_THRALL, Duration.of(t, RSTimeUnit.GAME_TICKS));
 			}
 		}
