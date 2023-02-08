@@ -1196,9 +1196,9 @@ public class TimersPlugin extends Plugin
 		{
 			varTimers.put(gameTimer, createGameTimer(gameTimer, duration));
 		}
-		else if (timer.getTimeLeft().minus(duration).compareTo(Duration.of(-1, RSTimeUnit.GAME_TICKS)) < 0)
+		else if (timer.getTimeLeft().minus(duration).compareTo(Duration.of(-3, RSTimeUnit.GAME_TICKS)) < 0)
 		{
-			// Reset the timer when its duration increases (by more than 1 tick--to avoid tick drift impacting this comparison)
+			// Reset the timer when its duration increases (by more than 3 ticks--to avoid tick drift impacting this comparison)
 			// in order to allow it to turn red at the correct time even when refreshed early
 			removeVarTimer(gameTimer);
 			varTimers.put(gameTimer, createGameTimer(gameTimer, duration));
