@@ -56,9 +56,7 @@ public class Timer extends InfoBox
 	@Override
 	public String getText()
 	{
-		Duration timeLeft = Duration.between(Instant.now(), endTime);
-
-		int seconds = (int) (timeLeft.toMillis() / 1000L);
+		int seconds = (int) (getTimeLeft().toMillis() / 1000L);
 
 		int minutes = (seconds % 3600) / 60;
 		int secs = seconds % 60;
@@ -69,10 +67,8 @@ public class Timer extends InfoBox
 	@Override
 	public Color getTextColor()
 	{
-		Duration timeLeft = Duration.between(Instant.now(), endTime);
-
 		//check if timer has 10% of time left
-		if (timeLeft.getSeconds() < (duration.getSeconds() * .10))
+		if (getTimeLeft().getSeconds() < (duration.getSeconds() * .10))
 		{
 			return Color.RED.brighter();
 		}
@@ -83,15 +79,24 @@ public class Timer extends InfoBox
 	@Override
 	public boolean render()
 	{
-		Duration timeLeft = Duration.between(Instant.now(), endTime);
-		return !timeLeft.isNegative();
+		return !getTimeLeft().isNegative();
 	}
 
 	@Override
 	public boolean cull()
 	{
-		Duration timeLeft = Duration.between(Instant.now(), endTime);
+		Duration timeLeft = getTimeLeft();
 		return timeLeft.isZero() || timeLeft.isNegative();
+	}
+
+	/**
+	 * Get the remaining duration of the timer.
+	 *
+	 * @return The duration between the current time and the {@link #getEndTime() end time} of the timer.
+	 */
+	public Duration getTimeLeft()
+	{
+		return Duration.between(Instant.now(), endTime);
 	}
 
 	/**
