@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.inject.Provides;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -81,6 +82,7 @@ import static net.runelite.client.plugins.menuentryswapper.MenuEntrySwapperConfi
 import static net.runelite.client.plugins.menuentryswapper.MenuEntrySwapperConfig.KaramjaGlovesMode;
 import static net.runelite.client.plugins.menuentryswapper.MenuEntrySwapperConfig.MorytaniaLegsMode;
 import static net.runelite.client.plugins.menuentryswapper.MenuEntrySwapperConfig.RadasBlessingMode;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.Text;
 
 @PluginDescriptor(
@@ -92,6 +94,7 @@ import net.runelite.client.util.Text;
 @Slf4j
 public class MenuEntrySwapperPlugin extends Plugin
 {
+	private static final Color RESET_DEFAULT_COLOR = new Color(175, 175, 175);
 	private static final String SHIFTCLICK_CONFIG_GROUP = "shiftclick";
 	private static final String ITEM_KEY_PREFIX = "item_";
 	private static final String OBJECT_KEY_PREFIX = "object_";
@@ -518,6 +521,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 				for (int actionIdx = 0; actionIdx < OBJECT_MENU_TYPES.size(); ++actionIdx)
 				{
+					log.debug("Object index {} entry: {}", actionIdx, actions[actionIdx]);
+
 					if (Strings.isNullOrEmpty(actions[actionIdx]))
 					{
 						continue;
@@ -530,6 +535,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 						continue;
 					}
 
+					// TODO: remove swap to default option that appears before reset option
 					final MenuAction menuAction = OBJECT_MENU_TYPES.get(actionIdx);
 					if (menuAction != currentAction)
 					{
@@ -569,7 +575,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				if (swapConfig != null)
 				{
 					leftClickMenus.add(client.createMenuEntry(idx)
-						.setOption("Reset")
+						.setOption("Reset" + ColorUtil.prependColorTag(" (" + actions[0] + ')', RESET_DEFAULT_COLOR))
 						.setType(MenuAction.RUNELITE)
 						.onClick(objectResetConsumer(composition, false)));
 				}
@@ -577,7 +583,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				if (shiftSwapConfig != null)
 				{
 					shiftClickMenus.add(client.createMenuEntry(idx)
-						.setOption("Reset")
+						.setOption("Reset" + ColorUtil.prependColorTag(" (" + actions[0] + ')', RESET_DEFAULT_COLOR))
 						.setType(MenuAction.RUNELITE)
 						.onClick(objectResetConsumer(composition, true)));
 				}
@@ -724,6 +730,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 				for (int actionIdx = 0; actionIdx < NPC_MENU_TYPES.size(); ++actionIdx)
 				{
+					// TODO: how do we figure out what the default left-click option is?? Might not be possible/feasible?
+					log.debug("npc index {} entry: {}", actionIdx, actions[actionIdx]);
+
 					// Attack can be swapped with the in-game settings, and this becomes very confusing if we try
 					// to swap Attack and the game also tries to swap it (by deprioritizing), so just use the in-game
 					// setting.
@@ -874,6 +883,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 					for (int paramId = ParamID.OC_ITEM_OP1, opId = 2; paramId <= ParamID.OC_ITEM_OP8; ++paramId, ++opId)
 					{
 						final String opName = itemComposition.getStringValue(paramId);
+
+						log.debug("worn item index {} entry: {}", paramId, opName);
+
 						if (!Strings.isNullOrEmpty(opName))
 						{
 							if (leftClickOp == null || leftClickOp != opId)
@@ -896,7 +908,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 					if (leftClickOp != null)
 					{
 						leftClickMenus.add(client.createMenuEntry(idx)
-							.setOption("Reset")
+							.setOption("Reset" + ColorUtil.prependColorTag(" (Remove)", RESET_DEFAULT_COLOR))
 							.setType(MenuAction.RUNELITE)
 							.onClick(e ->
 							{
@@ -917,7 +929,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 					if (shiftClickOp != null)
 					{
 						shiftClickMenus.add(client.createMenuEntry(idx)
-							.setOption("Reset")
+							.setOption("Reset" + ColorUtil.prependColorTag(" (Remove)", RESET_DEFAULT_COLOR))
 							.setType(MenuAction.RUNELITE)
 							.onClick(e ->
 							{
@@ -1007,6 +1019,9 @@ public class MenuEntrySwapperPlugin extends Plugin
 				for (int actionIdx = 0; actionIdx < actions.length; ++actionIdx)
 				{
 					final String opName = actions[actionIdx];
+
+					log.debug("inventory item index {} entry: {}", actionIdx, opName);
+
 					if (!Strings.isNullOrEmpty(opName))
 					{
 						if (config.leftClickCustomization())
@@ -1054,7 +1069,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				if (leftClickOp != null && config.leftClickCustomization())
 				{
 					leftClickMenus.add(client.createMenuEntry(idx)
-						.setOption("Reset")
+						.setOption("Reset" + ColorUtil.prependColorTag(" (" + actions[defaultLeftClickOp] + ')', RESET_DEFAULT_COLOR))
 						.setType(MenuAction.RUNELITE)
 						.onClick(e ->
 						{
@@ -1075,7 +1090,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				if (shiftClickOp != null && config.shiftClickCustomization())
 				{
 					shiftClickMenus.add(client.createMenuEntry(idx)
-						.setOption("Reset")
+						.setOption("Reset" + ColorUtil.prependColorTag(" (" + actions[defaultShiftClickOp] + ')', RESET_DEFAULT_COLOR))
 						.setType(MenuAction.RUNELITE)
 						.onClick(e ->
 						{
@@ -1150,6 +1165,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 		for (int idx = entries.length - 1; idx >= 0; --idx)
 		{
 			final MenuEntry entry = entries[idx];
+
+			// TODO: find pre-swapped entries; this seems to be after other swaps like shop buy/sell-50
+			log.debug("widget index {} entry: {}", idx, entry.getOption());
+
 			if (entry.getType() == MenuAction.CC_OP || entry.getType() == MenuAction.CC_OP_LOW_PRIORITY)
 			{
 				final Widget w = entry.getWidget();
@@ -1219,7 +1238,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 						if (leftClick != null)
 						{
 							leftClickMenus.add(client.createMenuEntry(1)
-								.setOption("Reset")
+								.setOption("Reset" + ColorUtil.prependColorTag(" (" + w.getActions()[lowestOp] + ')', RESET_DEFAULT_COLOR)) // TODO: fix this, also fix for bank
 								.setType(MenuAction.RUNELITE)
 								.onClick(menuEntry ->
 								{
@@ -1242,7 +1261,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 						if (shiftClick != null)
 						{
 							shiftClickMenus.add(client.createMenuEntry(1)
-								.setOption("Reset")
+								.setOption("Reset" + ColorUtil.prependColorTag(" (" + w.getActions()[lowestOp] + ')', RESET_DEFAULT_COLOR)) // TODO: fix this, also fix for bank
 								.setType(MenuAction.RUNELITE)
 								.onClick(menuEntry ->
 								{
