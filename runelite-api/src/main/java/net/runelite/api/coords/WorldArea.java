@@ -26,7 +26,6 @@ package net.runelite.api.coords;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -220,25 +219,6 @@ public class WorldArea
 	 * Determines if the area can travel in one of the 9 directions
 	 * by using the standard collision detection algorithm.
 	 * <p>
-	 * Note that this method does not consider other actors as
-	 * a collision, but most non-boss NPCs do check for collision
-	 * with some actors. For actor collision checking, use the
-	 * {@link #canTravelInDirection(Client, int, int, Predicate)} method.
-	 *
-	 * @param client the client to test in
-	 * @param dx the x-axis direction to travel (-1, 0, or 1)
-	 * @param dy the y-axis direction to travel (-1, 0, or 1)
-	 * @return true if the area can travel in the specified direction
-	 */
-	public boolean canTravelInDirection(Client client, int dx, int dy)
-	{
-		return canTravelInDirection(client, dx, dy, x -> true);
-	}
-
-	/**
-	 * Determines if the area can travel in one of the 9 directions
-	 * by using the standard collision detection algorithm.
-	 * <p>
 	 * The passed x and y axis directions indicate the direction to
 	 * travel in.
 	 * <p>
@@ -250,12 +230,9 @@ public class WorldArea
 	 * @param client the client to test in
 	 * @param dx the x-axis direction to travel (-1, 0, or 1)
 	 * @param dy the y-axis direction to travel (-1, 0, or 1)
-	 * @param extraCondition an additional condition to perform when checking valid tiles,
-	 *                       such as performing a check for un-passable actors
 	 * @return true if the area can travel in the specified direction
 	 */
-	public boolean canTravelInDirection(Client client, int dx, int dy,
-										Predicate<? super WorldPoint> extraCondition)
+	public boolean canTravelInDirection(Client client, int dx, int dy)
 	{
 		dx = Integer.signum(dx);
 		dy = Integer.signum(dy);
@@ -344,8 +321,7 @@ public class WorldArea
 			// Check that the area doesn't bypass a wall
 			for (int y = startY; y <= endY; y++)
 			{
-				if ((collisionDataFlags[checkX][y] & xFlags) != 0 ||
-					!extraCondition.test(WorldPoint.fromScene(client, checkX, y, plane)))
+				if ((collisionDataFlags[checkX][y] & xFlags) != 0)
 				{
 					// Collision while attempting to travel along the x axis
 					return false;
@@ -375,8 +351,7 @@ public class WorldArea
 			// Check that the area tiles don't bypass a wall
 			for (int x = startX; x <= endX; x++)
 			{
-				if ((collisionDataFlags[x][checkY] & yFlags) != 0 ||
-					!extraCondition.test(WorldPoint.fromScene(client, x, checkY, client.getPlane())))
+				if ((collisionDataFlags[x][checkY] & yFlags) != 0)
 				{
 					// Collision while attempting to travel along the y axis
 					return false;
@@ -403,8 +378,7 @@ public class WorldArea
 		}
 		if (dx != 0 && dy != 0)
 		{
-			if ((collisionDataFlags[checkX][checkY] & xyFlags) != 0 ||
-				!extraCondition.test(WorldPoint.fromScene(client, checkX, checkY, client.getPlane())))
+			if ((collisionDataFlags[checkX][checkY] & xyFlags) != 0)
 			{
 				// Collision while attempting to travel diagonally
 				return false;
@@ -415,16 +389,14 @@ public class WorldArea
 			// x and y axis as well.
 			if (width == 1)
 			{
-				if ((collisionDataFlags[checkX][checkY - dy] & xFlags) != 0 &&
-					extraCondition.test(WorldPoint.fromScene(client, checkX, startY, client.getPlane())))
+				if ((collisionDataFlags[checkX][checkY - dy] & xFlags) != 0)
 				{
 					return false;
 				}
 			}
 			if (height == 1)
 			{
-				if ((collisionDataFlags[checkX - dx][checkY] & yFlags) != 0 &&
-					extraCondition.test(WorldPoint.fromScene(client, startX, checkY, client.getPlane())))
+				if ((collisionDataFlags[checkX - dx][checkY] & yFlags) != 0)
 				{
 					return false;
 				}
