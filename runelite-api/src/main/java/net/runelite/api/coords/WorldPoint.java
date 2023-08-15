@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 import net.runelite.api.Client;
 import static net.runelite.api.Constants.CHUNK_SIZE;
@@ -42,8 +43,9 @@ import net.runelite.api.Scene;
  * WorldPoints are immutable. Methods that modify the properties create a new
  * instance.
  */
+@EqualsAndHashCode(callSuper = true)
 @Value
-public class WorldPoint
+public class WorldPoint extends WorldArea
 {
 	private static final int[] REGION_MIRRORS = {
 		// Prifddinas
@@ -53,22 +55,10 @@ public class WorldPoint
 		13151, 9012
 	};
 
-	/**
-	 * X-axis coordinate.
-	 */
-	private final int x;
-
-	/**
-	 * Y-axis coordinate.
-	 */
-	private final int y;
-
-	/**
-	 * The plane level of the Tile, also referred as z-axis coordinate.
-	 *
-	 * @see Client#getPlane()
-	 */
-	private final int plane;
+	public WorldPoint(int x, int y, int plane)
+	{
+		super(x, y, 1, 1, plane);
+	}
 
 	/**
 	 * Offsets the x-axis coordinate by the passed value.
@@ -370,51 +360,6 @@ public class WorldPoint
 	}
 
 	/**
-	 * Gets the shortest distance from this point to a WorldArea.
-	 *
-	 * @param other the world area
-	 * @return the shortest distance
-	 */
-	public int distanceTo(WorldArea other)
-	{
-		return this.toWorldArea().distanceTo(other);
-	}
-
-	/**
-	 * Gets the distance between this point and another.
-	 * <p>
-	 * If the other point is not on the same plane, this method will return
-	 * {@link Integer#MAX_VALUE}. If ignoring the plane is wanted, use the
-	 * {@link #distanceTo2D(WorldPoint)} method.
-	 *
-	 * @param other other point
-	 * @return the distance
-	 */
-	public int distanceTo(WorldPoint other)
-	{
-		if (other.plane != plane)
-		{
-			return Integer.MAX_VALUE;
-		}
-
-		return distanceTo2D(other);
-	}
-
-	/**
-	 * Find the distance from this point to another point.
-	 * <p>
-	 * This method disregards the plane value of the two tiles and returns
-	 * the simple distance between the X-Z coordinate pairs.
-	 *
-	 * @param other other point
-	 * @return the distance
-	 */
-	public int distanceTo2D(WorldPoint other)
-	{
-		return Math.max(Math.abs(getX() - other.getX()), Math.abs(getY() - other.getY()));
-	}
-
-	/**
 	 * Converts the passed scene coordinates to a world space
 	 */
 	public static WorldPoint fromScene(Client client, int x, int y, int plane)
@@ -538,9 +483,11 @@ public class WorldPoint
 	 * Retrieves an area consisting of only this point.
 	 *
 	 * @return A {@link WorldArea} of width and height 1, encompassing only this point.
+	 * @deprecated WorldPoint now extends {@link WorldArea}, so this method no longer serves any function.
 	 */
+	@Deprecated
 	public WorldArea toWorldArea()
 	{
-		return new WorldArea(this, 1, 1);
+		return this;
 	}
 }

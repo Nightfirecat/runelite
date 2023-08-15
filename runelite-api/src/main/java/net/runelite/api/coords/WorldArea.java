@@ -27,7 +27,9 @@ package net.runelite.api.coords;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 import net.runelite.api.Client;
 import net.runelite.api.CollisionData;
 import net.runelite.api.CollisionDataFlag;
@@ -37,48 +39,48 @@ import net.runelite.api.Tile;
 /**
  * Represents an area on the world.
  */
+@AllArgsConstructor
+@ToString
 public class WorldArea
 {
 	/**
 	 * The western most point of the area.
 	 */
 	@Getter
-	private int x;
+	final int x;
 
 	/**
 	 * The southern most point of the area.
 	 */
 	@Getter
-	private int y;
+	final int y;
 
 	/**
 	 * The width of the area.
 	 */
 	@Getter
-	private int width;
+	final int width;
 
 	/**
 	 * The height of the area.
 	 */
 	@Getter
-	private int height;
+	final int height;
 
 	/**
 	 * The plane the area is on.
 	 */
 	@Getter
-	private int plane;
+	final int plane;
 
-	public WorldArea(int x, int y, int width, int height, int plane)
-	{
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
-		this.plane = plane;
-	}
-
-	public WorldArea(WorldPoint location, int width, int height)
+	/**
+	 * Create an area using the south-west corner of a given area with new width and height.
+	 *
+	 * @param location Area to use the south-west corner of
+	 * @param width    Width of the new area
+	 * @param height   Height of the new area
+	 */
+	public WorldArea(WorldArea location, int width, int height)
 	{
 		this.x = location.getX();
 		this.y = location.getY();
@@ -117,17 +119,6 @@ public class WorldArea
 	}
 
 	/**
-	 * Computes the shortest distance to a world coordinate.
-	 *
-	 * @param other the passed coordinate
-	 * @return the distance, or {@link Integer#MAX_VALUE} if the planes differ
-	 */
-	public int distanceTo(WorldPoint other)
-	{
-		return distanceTo(other.toWorldArea());
-	}
-
-	/**
 	 * Computes the shortest distance to another area while ignoring the plane.
 	 *
 	 * @param other the passed area
@@ -137,17 +128,6 @@ public class WorldArea
 	{
 		Point distances = getAxisDistances(other);
 		return Math.max(distances.getX(), distances.getY());
-	}
-
-	/**
-	 * Computes the shortest distance to a world coordinate.
-	 *
-	 * @param other the passed coordinate
-	 * @return the distance
-	 */
-	public int distanceTo2D(WorldPoint other)
-	{
-		return distanceTo2D(other.toWorldArea());
 	}
 
 	/**
@@ -189,18 +169,6 @@ public class WorldArea
 
 		Point distances = getAxisDistances(other);
 		return distances.getX() + distances.getY() == 1;
-	}
-
-	/**
-	 * Checks whether a coordinate is within melee distance of this area.
-	 *
-	 * @param other the coordinate
-	 * @return true if in melee distance, false otherwise
-	 * @see #isInMeleeDistance(WorldArea)
-	 */
-	public boolean isInMeleeDistance(WorldPoint other)
-	{
-		return isInMeleeDistance(other.toWorldArea());
 	}
 
 	/**
@@ -565,21 +533,6 @@ public class WorldArea
 			return false;
 		}
 		return sourceTile.hasLineOfSightTo(targetTile);
-	}
-
-	/**
-	 * Determine if this WorldArea has line of sight to another WorldArea.
-	 * <p>
-	 * Note that the reverse isn't necessarily true, meaning this can return true
-	 * while the other WorldArea does not have line of sight to this WorldArea.
-	 *
-	 * @param client The client to compare in
-	 * @param other The other WorldPoint to compare with
-	 * @return Returns true if this WorldPoint has line of sight to the WorldPoint
-	 */
-	public boolean hasLineOfSightTo(Client client, WorldPoint other)
-	{
-		return hasLineOfSightTo(client, other.toWorldArea());
 	}
 
 	/**

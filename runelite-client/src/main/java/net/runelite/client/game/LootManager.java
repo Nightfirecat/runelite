@@ -246,13 +246,13 @@ public class LootManager
 		{
 			delayedLootNpc = npc;
 			delayedLootTickLimit = 15;
-			delayedLootAreas = List.of(getAdjacentSquareLootTile(npc).toWorldArea());
+			delayedLootAreas = List.of(getAdjacentSquareLootTile(npc));
 		}
 		else if (npc.getId() == NpcID.HOLE_IN_THE_WALL)
 		{
 			delayedLootNpc = npc;
 			delayedLootTickLimit = 2;
-			delayedLootAreas = List.of(getAdjacentSquareLootTile(npc).toWorldArea());
+			delayedLootAreas = List.of(getAdjacentSquareLootTile(npc));
 		}
 		else if (npc.getId() == NpcID.DUKE_SUCELLUS_12192 || npc.getId() == NpcID.DUKE_SUCELLUS_12196)
 		{
@@ -343,9 +343,9 @@ public class LootManager
 			case NpcID.KRAKEN:
 			case NpcID.KRAKEN_6640:
 			case NpcID.KRAKEN_6656:
-				return Collections.singletonList(playerLocationLastTick.toWorldArea());
+				return Collections.singletonList(playerLocationLastTick);
 			case NpcID.CAVE_KRAKEN:
-				return Collections.singletonList(krakenPlayerLocation.toWorldArea());
+				return Collections.singletonList(krakenPlayerLocation);
 			case NpcID.ZULRAH:      // Green
 			case NpcID.ZULRAH_2043: // Red
 			case NpcID.ZULRAH_2044: // Blue
@@ -357,7 +357,7 @@ public class LootManager
 						int unpackedX = packed >> 8;
 						int unpackedY = packed & 0xFF;
 						final WorldPoint lootPoint = WorldPoint.fromScene(client, unpackedX, unpackedY, npc.getWorldLocation().getPlane());
-						return Collections.singletonList(lootPoint.toWorldArea());
+						return Collections.singletonList(lootPoint);
 					}
 				}
 				break;
@@ -386,7 +386,7 @@ public class LootManager
 				{
 					y += 4;
 				}
-				return Collections.singletonList(new WorldArea(x, y, 1, 1, bossLocation.getPlane()));
+				return Collections.singletonList(new WorldPoint(x, y, bossLocation.getPlane()));
 			}
 			case NpcID.NEX:
 			case NpcID.NEX_11279:
@@ -403,7 +403,7 @@ public class LootManager
 					final int packed = x << 8 | y;
 					if (itemSpawns.containsKey(packed))
 					{
-						return Collections.singletonList(playerLocationLastTick.toWorldArea());
+						return Collections.singletonList(playerLocationLastTick);
 					}
 				}
 				break;
@@ -417,7 +417,7 @@ public class LootManager
 			case NpcID.ARTIO:
 			case NpcID.SPINDEL:
 				// Bones are dropped under the center of the boss and loot is dropped under the player
-				return ImmutableList.of(npc.getWorldArea(), playerLocationLastTick.toWorldArea());
+				return ImmutableList.of(npc.getWorldArea(), playerLocationLastTick);
 			case NpcID.DUKE_SUCELLUS_12192:
 			case NpcID.DUKE_SUCELLUS_12196:
 			{
@@ -425,7 +425,7 @@ public class LootManager
 				final int x = bossLocation.getX() + npc.getComposition().getSize() / 2;
 				final int y = bossLocation.getY() - 1;
 
-				return List.of(new WorldPoint(x, y, bossLocation.getPlane()).toWorldArea());
+				return List.of(new WorldPoint(x, y, bossLocation.getPlane()));
 			}
 			case NpcID.VARDORVIS:
 			case NpcID.VARDORVIS_12224:
