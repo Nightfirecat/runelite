@@ -36,6 +36,7 @@ import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
@@ -76,7 +77,6 @@ public class DailyTasksPlugin extends Plugin
 	@Inject
 	private ChatMessageManager chatMessageManager;
 
-	private long lastReset;
 	private boolean loggingIn;
 
 	@Provides
@@ -91,12 +91,6 @@ public class DailyTasksPlugin extends Plugin
 		loggingIn = true;
 	}
 
-	@Override
-	public void shutDown()
-	{
-		lastReset = 0L;
-	}
-
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
@@ -109,60 +103,72 @@ public class DailyTasksPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		long currentTime = System.currentTimeMillis();
-		boolean dailyReset = !loggingIn && currentTime - lastReset > ONE_DAY;
-
-		if ((dailyReset || loggingIn)
-			&& client.getVarcIntValue(VarClientInt.MEMBERSHIP_STATUS) == 1)
+		if (loggingIn)
 		{
-			// Round down to the nearest day
-			lastReset = (long) Math.floor(currentTime / ONE_DAY) * ONE_DAY;
 			loggingIn = false;
+			checkDailyTasks(false);
+		}
+	}
 
-			if (config.showHerbBoxes())
-			{
-				checkHerbBoxes(dailyReset);
-			}
+	@Subscribe
+	void onVarbitChanged(VarbitChanged event)
+	{
+		if (event.getVarbitId() == 8354 && event.getValue() == 0)
+		{
+			checkDailyTasks(true);
+		}
+	}
 
-			if (config.showStaves())
-			{
-				checkStaves(dailyReset);
-			}
+	private void checkDailyTasks(boolean dailyReset)
+	{
+		if (client.getVarcIntValue(VarClientInt.MEMBERSHIP_STATUS) != 1)
+		{
+			return;
+		}
 
-			if (config.showEssence())
-			{
-				checkEssence(dailyReset);
-			}
+		if (config.showHerbBoxes())
+		{
+			checkHerbBoxes(dailyReset);
+		}
 
-			if (config.showRunes())
-			{
-				checkRunes(dailyReset);
-			}
+		if (config.showStaves())
+		{
+			checkStaves(dailyReset);
+		}
 
-			if (config.showSand())
-			{
-				checkSand(dailyReset);
-			}
+		if (config.showEssence())
+		{
+			checkEssence(dailyReset);
+		}
 
-			if (config.showFlax())
-			{
-				checkFlax(dailyReset);
-			}
+		if (config.showRunes())
+		{
+			checkRunes(dailyReset);
+		}
 
-			if (config.showBonemeal())
-			{
-				checkBonemeal(dailyReset);
-			}
+		if (config.showSand())
+		{
+			checkSand(dailyReset);
+		}
 
-			if (config.showDynamite())
-			{
-				checkDynamite(dailyReset);
-			}
+		if (config.showFlax())
+		{
+			checkFlax(dailyReset);
+		}
 
-			if (config.showArrows())
-			{
-				checkArrows(dailyReset);
-			}
+		if (config.showBonemeal())
+		{
+			checkBonemeal(dailyReset);
+		}
+
+		if (config.showDynamite())
+		{
+			checkDynamite(dailyReset);
+		}
+
+		if (config.showArrows())
+		{
+			checkArrows(dailyReset);
 		}
 	}
 
