@@ -248,6 +248,7 @@ public class IdleNotifierPlugin extends Plugin
 			case FISHING_PEARL_BARBARIAN_ROD_2:
 			case FISHING_PEARL_OILY_ROD:
 			case FISHING_BARBARIAN_ROD:
+			case FISHING_CUTTING_FLYING_FISH:
 			/* Mining(Normal) */
 			case MINING_BRONZE_PICKAXE:
 			case MINING_IRON_PICKAXE:
