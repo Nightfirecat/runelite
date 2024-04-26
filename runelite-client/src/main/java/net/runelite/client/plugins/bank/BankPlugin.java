@@ -205,7 +205,7 @@ public class BankPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onMenuShouldLeftClick(MenuShouldLeftClick event)
+	private void onMenuShouldLeftClick(MenuShouldLeftClick event)
 	{
 		if (!forceRightClickFlag)
 		{
@@ -230,7 +230,7 @@ public class BankPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onMenuEntryAdded(MenuEntryAdded event)
+	private void onMenuEntryAdded(MenuEntryAdded event)
 	{
 		if ((event.getOption().equals(DEPOSIT_WORN) && config.rightClickBankEquip())
 			|| (event.getOption().equals(DEPOSIT_INVENTORY) && config.rightClickBankInventory())
@@ -242,7 +242,7 @@ public class BankPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onScriptCallbackEvent(ScriptCallbackEvent event)
+	private void onScriptCallbackEvent(ScriptCallbackEvent event)
 	{
 		int[] intStack = client.getIntStack();
 		String[] stringStack = client.getStringStack();
@@ -295,7 +295,7 @@ public class BankPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onWidgetLoaded(WidgetLoaded event)
+	private void onWidgetLoaded(WidgetLoaded event)
 	{
 		if (event.getGroupId() == InterfaceID.SEED_VAULT && config.seedVaultValue())
 		{
@@ -322,7 +322,7 @@ public class BankPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onScriptPostFired(ScriptPostFired event)
+	private void onScriptPostFired(ScriptPostFired event)
 	{
 		if (event.getScriptId() == ScriptID.BANKMAIN_BUILD)
 		{
@@ -360,7 +360,7 @@ public class BankPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onItemContainerChanged(ItemContainerChanged event)
+	private void onItemContainerChanged(ItemContainerChanged event)
 	{
 		int containerId = event.getContainerId();
 
