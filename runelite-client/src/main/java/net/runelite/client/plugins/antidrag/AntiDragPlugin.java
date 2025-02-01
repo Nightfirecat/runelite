@@ -241,6 +241,14 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 				setSeedVaultDragDelay(config.dragDelay());
 			}
 		}
+		else if (ev.getScriptId() == ScriptID.INTERFACE_INV_UPDATE_BIG
+			|| ev.getScriptId() == ScriptID.INTERFACE_INV_DRAGCOMPLETE_SWAP_BIG)
+		{
+			if (isOverriding())
+			{
+				setEquipmentInvDragDelay(config.dragDelay());
+			}
+		}
 	}
 
 	private static void applyDragDelay(Widget widget, int delay)
@@ -275,6 +283,12 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 		applyDragDelay(inventory, delay);
 	}
 
+	private void setEquipmentInvDragDelay(int delay)
+	{
+		final Widget equipmentInventory = client.getWidget(ComponentID.EQUIPMENT_INVENTORY_ITEM_CONTAINER);
+		applyDragDelay(equipmentInventory, delay);
+	}
+
 	private void setCoxDragDelay(int delay)
 	{
 		final Widget coxChest = client.getWidget(ComponentID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE_ITEM_CONTAINER);
@@ -295,6 +309,7 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 		log.debug("Set delay to {}", delay);
 		client.setInventoryDragDelay(delay);
 		setInvDragDelay(delay);
+		setEquipmentInvDragDelay(delay);
 		setBankDragDelay(delay);
 		setCoxDragDelay(delay);
 		setSeedVaultDragDelay(delay);
@@ -305,6 +320,7 @@ public class AntiDragPlugin extends Plugin implements KeyListener
 		log.debug("Reset delay to {}", DEFAULT_DELAY);
 		client.setInventoryDragDelay(DEFAULT_DELAY);
 		setInvDragDelay(DEFAULT_DELAY);
+		setEquipmentInvDragDelay(DEFAULT_DELAY);
 		setBankDragDelay(DEFAULT_DELAY);
 		setCoxDragDelay(DEFAULT_DELAY);
 		setSeedVaultDragDelay(DEFAULT_DELAY);

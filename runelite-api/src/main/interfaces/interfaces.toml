@@ -295,7 +295,7 @@ emote_scrollbar=4
 
 [equipment]
 id=387
-inventory_item_container=0
+container=0
 cape=16
 dizanas_quiver_item_container=28
 
@@ -307,6 +307,7 @@ stat_bonus=49
 
 [equipment_inventory]
 id=85
+item_container=0
 
 [experience_tracker]
 id=122

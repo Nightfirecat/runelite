@@ -485,4 +485,10 @@ public final class ScriptID
 
 	@ScriptArguments(integer = 7)
 	public static final int SEED_VAULT_BUILD = 2819;
+
+	@ScriptArguments(integer = 6, string = 9)
+	public static final int INTERFACE_INV_UPDATE_BIG = 151;
+
+	@ScriptArguments(integer = 6, string = 9)
+	public static final int INTERFACE_INV_DRAGCOMPLETE_SWAP_BIG = 155;
 }
