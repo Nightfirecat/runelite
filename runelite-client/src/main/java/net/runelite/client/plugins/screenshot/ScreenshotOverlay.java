@@ -30,7 +30,6 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,7 +38,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import net.runelite.api.Client;
-import net.runelite.api.MainBufferProvider;
+import net.runelite.api.Point;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.ui.DrawManager;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
@@ -49,7 +49,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 class ScreenshotOverlay extends Overlay
 {
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM. dd, yyyy");
-	private static final int REPORT_BUTTON_X_OFFSET = 437;
 
 	private final Client client;
 	private final DrawManager drawManager;
@@ -76,11 +75,9 @@ class ScreenshotOverlay extends Overlay
 			return null;
 		}
 
-		final MainBufferProvider bufferProvider = (MainBufferProvider) client.getBufferProvider();
-		final int imageHeight = ((BufferedImage) bufferProvider.getImage()).getHeight();
-		final int y = imageHeight - plugin.getReportButton().getHeight() - 1;
+		final Point reportButtonPoint = client.getWidget(InterfaceID.Chatbox.REPORTABUSE_GRAPHIC).getCanvasLocation();
 
-		graphics.drawImage(plugin.getReportButton(), REPORT_BUTTON_X_OFFSET, y, null);
+		graphics.drawImage(plugin.getReportButton(), reportButtonPoint.getX(), reportButtonPoint.getY(), null);
 
 		graphics.setFont(FontManager.getRunescapeSmallFont());
 		FontMetrics fontMetrics = graphics.getFontMetrics();
@@ -89,8 +86,8 @@ class ScreenshotOverlay extends Overlay
 		final int dateWidth = fontMetrics.stringWidth(date);
 		final int dateHeight = fontMetrics.getHeight();
 
-		final int textX = REPORT_BUTTON_X_OFFSET + plugin.getReportButton().getWidth() / 2 - dateWidth / 2;
-		final int textY = y + plugin.getReportButton().getHeight() / 2 + dateHeight / 2;
+		final int textX = reportButtonPoint.getX() + plugin.getReportButton().getWidth() / 2 - dateWidth / 2;
+		final int textY = reportButtonPoint.getY() + plugin.getReportButton().getHeight() / 2 + dateHeight / 2;
 
 		graphics.setColor(Color.BLACK);
 		graphics.drawString(date, textX + 1, textY + 1);
