@@ -1,7 +1,9 @@
 package net.runelite.client.game;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Range;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -486,13 +488,19 @@ public enum GameArea
 		this.regionAreas = allAreas.build();
 	}
 
+	/**
+	 * An area of the game within a given region, which may encompass the entire region or be contained to a specific
+	 * {@link WorldArea} and/or planes within that region.
+	 */
 	@Getter
 	@RequiredArgsConstructor
 	public static class RegionArea
 	{
 		private final int region;
 		@Nullable
-		private WorldArea area; // NOPMD: ImmutableField
+		private WorldArea area;
+		@Nullable
+		private Range<Integer> planes;
 
 		/**
 		 * Create a {@code RegionArea} in a given region of the area containing the given southwest and northeast corners.
@@ -503,8 +511,34 @@ public enum GameArea
 		 */
 		private RegionArea(final int region, final WorldPoint swCorner, final WorldPoint neCorner)
 		{
+			this(region, swCorner, neCorner, null);
+		}
+
+		/**
+		 * TODO
+		 *
+		 * @param region Region the area is within
+		 * @param planes
+		 */
+		private RegionArea(final int region, @Nullable final Range<Integer> planes)
+		{
+			this.region = region;
+			this.planes = planes;
+		}
+
+		/**
+		 * TODO
+		 *
+		 * @param region   Region the area is within
+		 * @param swCorner Southwest corner of the area
+		 * @param neCorner Northeast corner of the area
+		 * @param planes
+		 */
+		private RegionArea(final int region, final WorldPoint swCorner, final WorldPoint neCorner, @Nullable final Range<Integer> planes)
+		{
 			this.region = region;
 			this.area = new WorldArea(swCorner, neCorner.getX() - swCorner.getX() + 1, neCorner.getY() - swCorner.getY() + 1);
+			this.planes = planes;
 		}
 	}
 

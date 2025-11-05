@@ -1,7 +1,6 @@
 package net.runelite.client.plugins.discord;
 
 import java.util.Optional;
-import static net.runelite.client.plugins.discord.DiscordGameEventType.DiscordEventArea;
 import static net.runelite.client.plugins.discord.DiscordGameEventType.FROM_POINT;
 import static org.junit.Assert.fail;
 import org.junit.Test;
@@ -21,12 +20,9 @@ public class DiscordGameEventTypeTest
 						|| (area.getArea() == null && discordEventArea.getArea() == null)))
 					.findAny();
 
-				if (overlappingArea.isPresent())
-				{
-					final DiscordEventArea overlap = overlappingArea.get();
+				overlappingArea.ifPresent(overlap ->
 					fail("Game event type " + discordEventArea.getGameArea() + " has area " + discordEventArea.getArea()
-						+ " which overlaps the area of " + overlap.getGameArea() + ": " + overlap.getArea());
-				}
+						+ " which overlaps the area of " + overlap.getGameArea() + ": " + overlap.getArea()));
 			}
 		});
 	}

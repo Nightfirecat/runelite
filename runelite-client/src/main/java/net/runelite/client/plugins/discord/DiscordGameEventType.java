@@ -29,11 +29,11 @@ package net.runelite.client.plugins.discord;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Range;
 import java.util.List;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
@@ -45,7 +45,6 @@ import net.runelite.client.game.GameAreaType;
 @Getter
 enum DiscordGameEventType
 {
-
 	IN_MENU("In Menu", -3, true, true, true, false),
 	IN_GAME("In Game", -3, true, false, false, false),
 	PLAYING_DEADMAN("Playing Deadman Mode", -3),
@@ -74,35 +73,19 @@ enum DiscordGameEventType
 	TRAINING_HUNTER(Skill.HUNTER),
 	TRAINING_CONSTRUCTION(Skill.CONSTRUCTION),
 	TRAINING_SAILING(Skill.SAILING),
-
-
 	;
 
-	@Value
 	@VisibleForTesting
-	static class DiscordEventArea
-	{
-		private final GameArea gameArea;
-		@Nullable
-		private final WorldArea area;
-	}
-
-	@VisibleForTesting
-	static final Multimap<Integer, DiscordEventArea> FROM_POINT;
+	static final Multimap<Integer, GameArea> FROM_POINT;
 
 	static
 	{
-		ImmutableMultimap.Builder<Integer, DiscordEventArea> pointMapBuilder = new ImmutableMultimap.Builder<>();
+		ImmutableMultimap.Builder<Integer, GameArea> pointMapBuilder = new ImmutableMultimap.Builder<>();
 		for (GameArea gameArea : GameArea.values())
 		{
-			if (gameArea.getRegionAreas() == null)
-			{
-				continue;
-			}
-
 			for (RegionArea regionArea : gameArea.getRegionAreas())
 			{
-				pointMapBuilder.put(regionArea.getRegion(), new DiscordEventArea(gameArea, regionArea.getArea()));
+				pointMapBuilder.put(regionArea.getRegion(), gameArea);
 			}
 		}
 		FROM_POINT = pointMapBuilder.build();
@@ -225,18 +208,24 @@ enum DiscordGameEventType
 
 	public static GameArea fromPoint(final WorldPoint worldPoint)
 	{
+		final int currentRegion = worldPoint.getRegionID();
 		GameArea fullRegionArea = null;
-		for (DiscordEventArea area : FROM_POINT.get(worldPoint.getRegionID()))
+		for (GameArea gameArea : FROM_POINT.get(currentRegion))
 		{
-			if (area.getArea() == null)
+			if (gameArea.getFullRegions().contains(currentRegion))
 			{
-				fullRegionArea = area.getGameArea();
+				fullRegionArea = gameArea;
+				continue;
 			}
-			else
+
+			for (final RegionArea regionArea : gameArea.getRegionAreas())
 			{
-				if (area.getArea().contains2D(worldPoint))
+				final WorldArea worldArea = regionArea.getArea();
+				final Range<Integer> planes = regionArea.getPlanes();
+				if ((worldArea != null && worldArea.contains2D(worldPoint))
+					|| (planes != null && planes.contains(worldPoint.getPlane())))
 				{
-					return area.getGameArea();
+					return gameArea;
 				}
 			}
 		}
