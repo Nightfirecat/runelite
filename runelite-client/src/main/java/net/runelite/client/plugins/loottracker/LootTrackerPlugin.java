@@ -1023,7 +1023,7 @@ public class LootTrackerPlugin extends Plugin
 		}
 
 		final Matcher hamStoreroomMatcher = HAM_CHEST_LOOTED_PATTERN.matcher(message);
-		if (hamStoreroomMatcher.matches() && GameArea.HAM_STORE_ROOM.containsRegion(regionID))
+		if (GameArea.HAM_STORE_ROOM.containsRegion(regionID) && hamStoreroomMatcher.matches())
 		{
 			String keyType = hamStoreroomMatcher.group("key");
 			onInvChange(collectInvAndGroundItems(LootRecordType.EVENT, String.format("H.A.M. chest (%s)", keyType)));

@@ -139,7 +139,6 @@ public class WintertodtPlugin extends Plugin
 	private boolean isInWintertodtRegion()
 	{
 		return client.getLocalPlayer() != null && GameArea.WINTERTODT.containsRegion(client.getLocalPlayer().getWorldLocation().getRegionID());
-
 	}
 
 	@Subscribe
