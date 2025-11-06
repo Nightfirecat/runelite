@@ -1,6 +1,29 @@
+/*
+ * Copyright (c) 2025, Jordan Atwood <nightfirecat@nightfirec.at>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package net.runelite.client.game;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Range;
@@ -11,10 +34,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import net.runelite.api.Client;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.coords.WorldArea;
 import net.runelite.api.coords.WorldPoint;
 
 @Getter
@@ -280,7 +301,7 @@ public enum GameArea
 	LAST_MAN_STANDING_DESERTED_ISLAND("LMS - Deserted Island", GameAreaType.MINIGAMES, 13658, 13659, 13660, 13914, 13915, 13916),
 	LAST_MAN_STANDING_WILD_VARROCK("LMS - Wild Varrock", GameAreaType.MINIGAMES, 13918, 13919, 13920, 14174, 14175, 14176, 14430, 14431, 14432),
 	MAGE_TRAINING_ARENA("Mage Training Arena", GameAreaType.MINIGAMES, 13462, 13463),
-	NIGHTMARE_ZONE("Nightmare Zone", GameAreaType.MINIGAMES, 9033),
+	NIGHTMARE_ZONE("Nightmare Zone", GameAreaType.MINIGAMES, new RegionArea(9033, Range.closed(1, 3))),
 	PEST_CONTROL("Pest Control", GameAreaType.MINIGAMES, 10536),
 	PORT_SARIM_RAT_PITS("Port Sarim Rat Pits", GameAreaType.MINIGAMES, 11926),
 	PVP_ARENA("PvP Arena", GameAreaType.MINIGAMES,
@@ -488,60 +509,6 @@ public enum GameArea
 		this.regionAreas = allAreas.build();
 	}
 
-	/**
-	 * An area of the game within a given region, which may encompass the entire region or be contained to a specific
-	 * {@link WorldArea} and/or planes within that region.
-	 */
-	@Getter
-	@RequiredArgsConstructor
-	public static class RegionArea
-	{
-		private final int region;
-		@Nullable
-		private WorldArea area;
-		@Nullable
-		private Range<Integer> planes;
-
-		/**
-		 * Create a {@code RegionArea} in a given region of the area containing the given southwest and northeast corners.
-		 *
-		 * @param region   Region the area is within
-		 * @param swCorner Southwest corner of the area
-		 * @param neCorner Northeast corner of the area
-		 */
-		private RegionArea(final int region, final WorldPoint swCorner, final WorldPoint neCorner)
-		{
-			this(region, swCorner, neCorner, null);
-		}
-
-		/**
-		 * TODO
-		 *
-		 * @param region Region the area is within
-		 * @param planes
-		 */
-		private RegionArea(final int region, @Nullable final Range<Integer> planes)
-		{
-			this.region = region;
-			this.planes = planes;
-		}
-
-		/**
-		 * TODO
-		 *
-		 * @param region   Region the area is within
-		 * @param swCorner Southwest corner of the area
-		 * @param neCorner Northeast corner of the area
-		 * @param planes
-		 */
-		private RegionArea(final int region, final WorldPoint swCorner, final WorldPoint neCorner, @Nullable final Range<Integer> planes)
-		{
-			this.region = region;
-			this.area = new WorldArea(swCorner, neCorner.getX() - swCorner.getX() + 1, neCorner.getY() - swCorner.getY() + 1);
-			this.planes = planes;
-		}
-	}
-
 	private static List<RegionArea> regionGameAreas(final int... regionIds)
 	{
 		return Arrays.stream(regionIds)
@@ -567,7 +534,7 @@ public enum GameArea
 		final ImmutableSet.Builder<Integer> regions = ImmutableSet.builder();
 		for (final RegionArea regionArea : getRegionAreas())
 		{
-			if (regionArea.getArea() == null)
+			if (regionArea.getArea() == null && regionArea.getPlanes() == null)
 			{
 				regions.add(regionArea.getRegion());
 			}
@@ -590,9 +557,7 @@ public enum GameArea
 	{
 		for (final RegionArea regionArea : getRegionAreas())
 		{
-			final WorldArea subRegion = regionArea.getArea();
-			if ((subRegion != null && subRegion.contains2D(worldPoint))
-				|| worldPoint.getRegionID() == regionArea.getRegion())
+			if (regionArea.contains(worldPoint))
 			{
 				return true;
 			}
@@ -601,7 +566,9 @@ public enum GameArea
 	}
 
 	/**
-	 * Check if the area fully covers the given region.
+	 * Check if the area fully covers the given region. This does not guarantee that every possible {@link WorldPoint}
+	 * in this region would match {@link #contains(WorldPoint)} as sub-region areas of other {@link GameArea GameAreas}
+	 * may override this one.
 	 *
 	 * @param regionId ID of the region to check whether is contained in the area.
 	 * @return {@code true} if the region is fully covered by the area, {@code false} otherwise.
@@ -628,5 +595,38 @@ public enum GameArea
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Gets the {@link GameArea} best matching the given {@link WorldPoint}. That is, if a full-region and sub-region
+	 * area both match a given point, the more specific sub-region area would be returned instead of the base
+	 * full-region area.
+	 *
+	 * @param worldPoint The given {@link WorldPoint} to find a {@link GameArea} which contains it
+	 * @return The most specific {@link GameArea} containing the given {@link WorldPoint}, or {@code null} if no
+	 *         matching area is mapped.
+	 */
+	@Nullable
+	public static GameArea fromPoint(final WorldPoint worldPoint)
+	{
+		final int pointRegion = worldPoint.getRegionID();
+		GameArea fullRegionArea = null;
+		for (GameArea gameArea : values())
+		{
+			if (gameArea.getFullRegions().contains(pointRegion))
+			{
+				fullRegionArea = gameArea;
+				continue;
+			}
+
+			for (final RegionArea regionArea : gameArea.getRegionAreas())
+			{
+				if (regionArea.contains(worldPoint))
+				{
+					return gameArea;
+				}
+			}
+		}
+		return fullRegionArea;
 	}
 }

@@ -26,22 +26,10 @@
  */
 package net.runelite.client.plugins.discord;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Range;
-import java.util.List;
 import javax.annotation.Nullable;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.runelite.api.Skill;
-import net.runelite.api.coords.WorldArea;
-import net.runelite.api.coords.WorldPoint;
-import net.runelite.client.game.GameArea;
-import net.runelite.client.game.GameArea.RegionArea;
-import net.runelite.client.game.GameAreaType;
 
-@AllArgsConstructor
 @Getter
 enum DiscordGameEventType
 {
@@ -75,22 +63,6 @@ enum DiscordGameEventType
 	TRAINING_SAILING(Skill.SAILING),
 	;
 
-	@VisibleForTesting
-	static final Multimap<Integer, GameArea> FROM_POINT;
-
-	static
-	{
-		ImmutableMultimap.Builder<Integer, GameArea> pointMapBuilder = new ImmutableMultimap.Builder<>();
-		for (GameArea gameArea : GameArea.values())
-		{
-			for (RegionArea regionArea : gameArea.getRegionAreas())
-			{
-				pointMapBuilder.put(regionArea.getRegion(), gameArea);
-			}
-		}
-		FROM_POINT = pointMapBuilder.build();
-	}
-
 	@Nullable
 	private String imageKey;
 
@@ -121,12 +93,6 @@ enum DiscordGameEventType
 	 * Determines if event should be cleared when processed
 	 */
 	private boolean shouldBeCleared = true;
-
-	@Nullable
-	private GameAreaType gameAreaType;
-
-	@Nullable
-	private List<RegionArea> regionAreas;
 
 	DiscordGameEventType(Skill skill)
 	{
@@ -204,31 +170,5 @@ enum DiscordGameEventType
 			case CONSTRUCTION: return TRAINING_CONSTRUCTION;
 			default: return null;
 		}
-	}
-
-	public static GameArea fromPoint(final WorldPoint worldPoint)
-	{
-		final int currentRegion = worldPoint.getRegionID();
-		GameArea fullRegionArea = null;
-		for (GameArea gameArea : FROM_POINT.get(currentRegion))
-		{
-			if (gameArea.getFullRegions().contains(currentRegion))
-			{
-				fullRegionArea = gameArea;
-				continue;
-			}
-
-			for (final RegionArea regionArea : gameArea.getRegionAreas())
-			{
-				final WorldArea worldArea = regionArea.getArea();
-				final Range<Integer> planes = regionArea.getPlanes();
-				if ((worldArea != null && worldArea.contains2D(worldPoint))
-					|| (planes != null && planes.contains(worldPoint.getPlane())))
-				{
-					return gameArea;
-				}
-			}
-		}
-		return fullRegionArea;
 	}
 }

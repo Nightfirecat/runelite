@@ -334,16 +334,7 @@ public class DiscordPlugin extends Plugin
 			return;
 		}
 
-		GameArea gameArea = DiscordGameEventType.fromPoint(playerWorldPoint);
-
-		// NMZ uses the same region ID as KBD. KBD is always on plane 0 and NMZ is always above plane 0
-		// Since KBD requires going through the wilderness there is no EventType for it
-		if (GameArea.NIGHTMARE_ZONE == gameArea
-			&& client.getLocalPlayer().getWorldLocation().getPlane() == 0)
-		{
-			gameArea = null;
-		}
-
+		final GameArea gameArea = GameArea.fromPoint(playerWorldPoint);
 		if (!showArea(gameArea))
 		{
 			return;

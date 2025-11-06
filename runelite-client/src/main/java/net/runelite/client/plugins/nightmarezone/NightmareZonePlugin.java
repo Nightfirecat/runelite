@@ -280,8 +280,6 @@ public class NightmareZonePlugin extends Plugin
 			return false;
 		}
 
-		// NMZ and the KBD lair uses the same region ID but NMZ uses planes 1-3 and KBD uses plane 0
-		return localPlayer.getWorldLocation().getPlane() > 0
-			&& GameArea.NIGHTMARE_ZONE.containsRegion(WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation()).getRegionID());
+		return GameArea.fromPoint(WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation())) == GameArea.NIGHTMARE_ZONE;
 	}
 }
