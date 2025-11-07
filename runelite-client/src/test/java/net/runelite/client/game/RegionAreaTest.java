@@ -87,14 +87,14 @@ public class RegionAreaTest
 
 		// One region fully contains the others' planes
 		assertTrue(new RegionArea(0, Range.closed(0, 3))
-			.subRegionIntersects(new RegionArea(0, Range.closed(2, 2))));
-		assertTrue(new RegionArea(0, Range.closed(2, 2))
+			.subRegionIntersects(new RegionArea(0, Range.singleton(2))));
+		assertTrue(new RegionArea(0, Range.singleton(2))
 			.subRegionIntersects(new RegionArea(0, Range.closed(0, 3))));
 
 		// Full region areas with disjoint planes
 		assertFalse(new RegionArea(0, Range.closed(0, 1))
-			.subRegionIntersects(new RegionArea(0, Range.closed(2, 2))));
-		assertFalse(new RegionArea(0, Range.closed(2, 2))
+			.subRegionIntersects(new RegionArea(0, Range.singleton(2))));
+		assertFalse(new RegionArea(0, Range.singleton(2))
 			.subRegionIntersects(new RegionArea(0, Range.closed(0, 1))));
 	}
 
@@ -134,7 +134,7 @@ public class RegionAreaTest
 			.contains(new WorldPoint(0, 0, 1)));
 		assertTrue(new RegionArea(0, Range.closed(0, 1))
 			.contains(new WorldPoint(Constants.REGION_SIZE - 1, Constants.REGION_SIZE - 1, 0)));
-		assertTrue(new RegionArea(0, Range.closed(3, 3))
+		assertTrue(new RegionArea(0, Range.singleton(3))
 			.contains(new WorldPoint(0, 0, 3)));
 		assertFalse(new RegionArea(0, Range.closed(0, 1))
 			.contains(new WorldPoint(0, 0, 2)));

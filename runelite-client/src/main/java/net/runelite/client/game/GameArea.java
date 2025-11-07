@@ -92,7 +92,7 @@ public enum GameArea
 	CAM_TORUM("Cam Torum", GameAreaType.CITIES,
 		regionGameAreas(5780, 5781),
 		new RegionArea(5525, Range.atLeast(1)),
-		new RegionArea(6037, new WorldPoint(1472, 9536, 0), new WorldPoint(1495, 9565, 0), Range.closed(0, 0)),
+		new RegionArea(6037, new WorldPoint(1472, 9536, 0), new WorldPoint(1495, 9565, 0), Range.singleton(0)),
 		new RegionArea(6037, Range.atLeast(1))),
 	CANIFIS("Canifis", GameAreaType.CITIES, 13878),
 	CATHERBY("Catherby", GameAreaType.CITIES, 11317, 11318, 11061),

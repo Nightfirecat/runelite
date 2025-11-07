@@ -129,8 +129,8 @@ public class RegionArea
 
 		final WorldArea thisArea = getArea() != null ? getArea() : new WorldArea(WorldPoint.fromRegion(getRegion(), 0, 0, 0), Constants.REGION_SIZE, Constants.REGION_SIZE);
 		final WorldArea otherArea = other.getArea() != null ? other.getArea() : new WorldArea(WorldPoint.fromRegion(other.getRegion(), 0, 0, 0), Constants.REGION_SIZE, Constants.REGION_SIZE);
-		final Range<Integer> thisPlanes = getPlanes() != null ? getPlanes() : Range.closed(0, 4);
-		final Range<Integer> otherPlanes = other.getPlanes() != null ? other.getPlanes() : Range.closed(0, 4);
+		final Range<Integer> thisPlanes = getPlanes() != null ? getPlanes() : Range.closed(0, 3);
+		final Range<Integer> otherPlanes = other.getPlanes() != null ? other.getPlanes() : Range.closed(0, 3);
 
 		return thisArea.intersectsWith2D(otherArea) && rangesOverlap(thisPlanes, otherPlanes);
 	}
