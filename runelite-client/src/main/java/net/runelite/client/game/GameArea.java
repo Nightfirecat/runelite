@@ -568,6 +568,10 @@ public enum GameArea
 	 * Note: Sub-region definitions assume that {@link WorldPoint WorldPoints} will be translated from instances, such
 	 *       as via {@link WorldPoint#fromLocalInstance(Client, LocalPoint)}. Points from instances will not return the
 	 *       correct value otherwise.
+	 * <br>
+	 * Furthermore, a return value of {@code true} does not mean that {@link #fromPoint(WorldPoint)} would return this
+	 * area, because both a full-region area and sub-region area overlaid on it could return {@code true}, but only the
+	 * sub-region area would be returned by {@link #fromPoint(WorldPoint)}.
 	 *
 	 * @param worldPoint The point to check whether is contained in the area.
 	 * @return {@code true} if a region or sub-region of the area contains {@code worldPoint}, {@code false} otherwise.
