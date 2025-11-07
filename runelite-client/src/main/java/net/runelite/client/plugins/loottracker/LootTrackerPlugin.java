@@ -275,7 +275,6 @@ public class LootTrackerPlugin extends Plugin
 	private static final String WINTERTODT_SUPPLY_CRATE_EVENT = "Supply crate (Wintertodt)";
 	private static final String WINTERTODT_REWARD_CART_EVENT = "Reward cart (Wintertodt)";
 	private static final String WINTERTODT_LOOT_STRING = "You found some loot: ";
-	private static final int WINTERTODT_REGION = 6461;
 
 	private static final String BAG_FULL_OF_GEMS_PERCY_EVENT = "Bag full of gems (Percy)";
 	private static final String BAG_FULL_OF_GEMS_BELONA_EVENT = "Bag full of gems (Belona)";
@@ -301,7 +300,6 @@ public class LootTrackerPlugin extends Plugin
 	private static final String THEATRE_OF_BLOOD = "Theatre of Blood";
 	private static final String TOMBS_OF_AMASCUT = "Tombs of Amascut";
 
-	private static final int FONT_OF_CONSUMPTION_REGION = 12106;
 	private static final String FONT_OF_CONSUMPTION_USE_MESSAGE = "You place the Unsired into the Font of Consumption...";
 
 	private static final String BA_HIGH_GAMBLE = "Barbarian Assault high gamble";
@@ -1119,13 +1117,13 @@ public class LootTrackerPlugin extends Plugin
 			return;
 		}
 
-		if (regionID == WINTERTODT_REGION && message.contains(WINTERTODT_LOOT_STRING))
+		if (GameArea.WINTERTODT_CAMP.containsRegion(regionID) && message.contains(WINTERTODT_LOOT_STRING))
 		{
 			onInvChange(collectInvItems(LootRecordType.EVENT, WINTERTODT_REWARD_CART_EVENT, client.getBoostedSkillLevel(Skill.FIREMAKING)));
 			return;
 		}
 
-		if (regionID == FONT_OF_CONSUMPTION_REGION && message.equals(FONT_OF_CONSUMPTION_USE_MESSAGE))
+		if (GameArea.ABYSSAL_NEXUS.containsRegion(regionID) && message.equals(FONT_OF_CONSUMPTION_USE_MESSAGE))
 		{
 			onInvChange(collectInvItems(LootRecordType.EVENT, "Unsired"));
 		}
