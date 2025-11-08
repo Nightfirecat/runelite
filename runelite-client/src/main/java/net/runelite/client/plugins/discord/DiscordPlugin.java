@@ -42,6 +42,7 @@ import javax.inject.Named;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import net.runelite.api.WorldType;
 import net.runelite.api.coords.WorldPoint;
@@ -309,12 +310,14 @@ public class DiscordPlugin extends Plugin
 
 	private void checkForAreaUpdate()
 	{
-		if (client.getLocalPlayer() == null)
+		final Player player = client.getLocalPlayer();
+		if (player == null)
 		{
 			return;
 		}
 
-		final WorldPoint playerWorldPoint = WorldPoint.fromLocalInstance(client, client.getLocalPlayer().getLocalLocation());
+		final WorldPoint instancePoint = WorldPoint.fromLocalInstance(client, player.getLocalLocation());
+		final WorldPoint playerWorldPoint = new WorldPoint(instancePoint.getX(), instancePoint.getY(), player.getWorldView().getPlane());
 
 		if (playerWorldPoint.getRegionID() == 0)
 		{

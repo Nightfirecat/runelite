@@ -275,11 +275,12 @@ public class NightmareZonePlugin extends Plugin
 	public boolean isInNightmareZone()
 	{
 		final Player localPlayer = client.getLocalPlayer();
-		if (localPlayer == null)
+		if (localPlayer == null || !localPlayer.getWorldView().isInstance())
 		{
 			return false;
 		}
 
-		return GameArea.fromPoint(WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation())) == GameArea.NIGHTMARE_ZONE;
+		final WorldPoint instancePoint = WorldPoint.fromLocalInstance(client, localPlayer.getLocalLocation());
+		return GameArea.fromPoint(new WorldPoint(instancePoint.getX(), instancePoint.getY(), localPlayer.getWorldView().getPlane())) == GameArea.NIGHTMARE_ZONE;
 	}
 }
