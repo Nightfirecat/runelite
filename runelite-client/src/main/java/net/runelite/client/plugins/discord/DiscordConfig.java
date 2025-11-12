@@ -159,4 +159,15 @@ public interface DiscordConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "showWildernessLocation",
+		name = "Wilderness",
+		description = "Show your location while in the wilderness.",
+		position = 11
+	)
+	default boolean showWildernessLocation()
+	{
+		return false;
+	}
 }

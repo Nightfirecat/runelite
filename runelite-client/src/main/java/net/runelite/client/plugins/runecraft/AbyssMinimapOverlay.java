@@ -30,6 +30,7 @@ import net.runelite.api.DecorativeObject;
 import net.runelite.api.Perspective;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.client.game.GameArea;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -71,7 +72,7 @@ class AbyssMinimapOverlay extends Overlay
 		}
 
 		final int region = player.getWorldLocation().getRegionID();
-		if (region != RunecraftPlugin.ABYSS_REGION || !config.showRifts())
+		if (!GameArea.ABYSS.containsRegion(region) || !config.showRifts())
 		{
 			return null;
 		}

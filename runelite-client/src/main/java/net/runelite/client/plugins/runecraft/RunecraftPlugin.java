@@ -72,7 +72,6 @@ public class RunecraftPlugin extends Plugin
 		ItemID.RCU_POUCH_GIANT_DEGRADE,
 		ItemID.RCU_POUCH_COLOSSAL_DEGRADE
 	);
-	static final int ABYSS_REGION = 12107;
 
 	@Getter(AccessLevel.PACKAGE)
 	private final Set<DecorativeObject> abyssObjects = new HashSet<>();

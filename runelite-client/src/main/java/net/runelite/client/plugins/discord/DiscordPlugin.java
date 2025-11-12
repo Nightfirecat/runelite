@@ -37,6 +37,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import javax.imageio.ImageIO;
 import javax.inject.Named;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.discord.DiscordService;
 import net.runelite.client.eventbus.Subscribe;
@@ -106,6 +108,13 @@ public class DiscordPlugin extends Plugin
 	@Inject
 	@Named("runelite.discord.invite")
 	private String discordInvite;
+
+	// Game areas not actually in the wilderness but require--or usually make use of--wilderness travel to reach them.
+	private static final Set<GameArea> WILDERNESS_TRAVEL_AREAS = EnumSet.of(
+		GameArea.KING_BLACK_DRAGON,
+		GameArea.ABYSS,
+		GameArea.MAGE_ARENA_BANK
+	);
 
 	private final Map<Skill, Integer> skillExp = new HashMap<>();
 	private NavigationButton discordButton;
@@ -348,6 +357,12 @@ public class DiscordPlugin extends Plugin
 	private boolean showArea(final GameArea area)
 	{
 		if (area == null)
+		{
+			return false;
+		}
+
+		final boolean inWilderness = client.getVarbitValue(VarbitID.INSIDE_WILDERNESS) == 1;
+		if ((inWilderness || WILDERNESS_TRAVEL_AREAS.contains(area)) && !config.showWildernessLocation())
 		{
 			return false;
 		}

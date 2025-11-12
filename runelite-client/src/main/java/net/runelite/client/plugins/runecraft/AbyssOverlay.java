@@ -34,6 +34,7 @@ import net.runelite.api.Client;
 import net.runelite.api.DecorativeObject;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.client.game.GameArea;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -65,7 +66,7 @@ class AbyssOverlay extends Overlay
 
 		final int region = player.getWorldLocation().getRegionID();
 		Set<DecorativeObject> abyssObjects = plugin.getAbyssObjects();
-		if (region != RunecraftPlugin.ABYSS_REGION || abyssObjects.isEmpty() || !config.showRifts() || !config.showClickBox())
+		if (!GameArea.ABYSS.containsRegion(region) || abyssObjects.isEmpty() || !config.showRifts() || !config.showClickBox())
 		{
 			return null;
 		}
