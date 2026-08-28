@@ -207,7 +207,7 @@ public class BoostsPlugin extends Plugin
 	{
 		Skill skill = statChanged.getSkill();
 
-		if (!config.displayBoosts().skillsToDisplay.contains(skill))
+		if (!BoostsConfig.DisplayBoosts.BOTH.getSkillsToDisplay().contains(skill))
 		{
 			return;
 		}
@@ -287,7 +287,7 @@ public class BoostsPlugin extends Plugin
 	private void updateShownSkills()
 	{
 		shownSkills.clear();
-		shownSkills.addAll(config.displayBoosts().skillsToDisplay);
+		shownSkills.addAll(config.displayBoosts().getSkillsToDisplay());
 		updateBoostedStats();
 	}
 

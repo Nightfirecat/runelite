@@ -24,11 +24,11 @@
  */
 package net.runelite.client.plugins.boosts;
 
-import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import lombok.AccessLevel;
+import lombok.Getter;
 import net.runelite.api.Skill;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -50,15 +50,13 @@ public interface BoostsConfig extends Config
 		NONE("None", Collections.EMPTY_SET),
 		COMBAT("Combat", DisplayBoostSkills.BOOSTABLE_COMBAT_SKILLS),
 		NON_COMBAT("Non Combat", DisplayBoostSkills.BOOSTABLE_NON_COMBAT_SKILLS),
-		ALL("All", DisplayBoostSkills.ALL_BOOSTABLE_SKILLS),
-
-		// STR_RANGE_MAGE: Similar to Combat, but without attack & defence. In both PvM & PvP, odds are that you're
-		// gonna be using a mixture of super combat potions & saradomin brews, which means that knowing your attack
-		// & defence boosts doesn't give you any more info than knowing your Strength boost.
+		// enum name is retained from before addition of STR_RANGE_MAGE
+		BOTH("All", DisplayBoostSkills.ALL_BOOSTABLE_SKILLS),
 		STR_RANGE_MAGE("Str, Range, Mage", DisplayBoostSkills.STR_RANGE_MAGE);
 
-		String name;
-		Set<Skill> skillsToDisplay;
+		private final String name;
+		@Getter(AccessLevel.PACKAGE)
+		private final Set<Skill> skillsToDisplay;
 
 		DisplayBoosts(String name, Set<Skill> skillsToDisplay)
 		{
@@ -69,29 +67,26 @@ public interface BoostsConfig extends Config
 		@Override
 		public String toString()
 		{
-			return this.name;
+			return name;
 		}
 	}
-	// use static class for these constants since we can't put these directly in DisplayBoosts,
-	// can't use enum static fields in their own init.
+
 	class DisplayBoostSkills
 	{
-		public static final Set<Skill> BOOSTABLE_COMBAT_SKILLS = ImmutableSet.of(
+		public static final Set<Skill> BOOSTABLE_COMBAT_SKILLS = EnumSet.of(
 			Skill.ATTACK,
 			Skill.STRENGTH,
 			Skill.DEFENCE,
 			Skill.RANGED,
 			Skill.MAGIC);
-		public static final Set<Skill> BOOSTABLE_NON_COMBAT_SKILLS = ImmutableSet.of(
+		public static final Set<Skill> BOOSTABLE_NON_COMBAT_SKILLS = EnumSet.of(
 			Skill.MINING, Skill.AGILITY, Skill.SMITHING, Skill.HERBLORE, Skill.FISHING, Skill.THIEVING,
 			Skill.COOKING, Skill.CRAFTING, Skill.FIREMAKING, Skill.FLETCHING, Skill.WOODCUTTING, Skill.RUNECRAFT,
 			Skill.SLAYER, Skill.FARMING, Skill.CONSTRUCTION, Skill.HUNTER, Skill.SAILING);
 
-		public static final Set<Skill> ALL_BOOSTABLE_SKILLS = Stream.concat(
-			BOOSTABLE_COMBAT_SKILLS.stream(), BOOSTABLE_NON_COMBAT_SKILLS.stream()
-		).collect(Collectors.toSet());
+		public static final Set<Skill> ALL_BOOSTABLE_SKILLS = EnumSet.complementOf(EnumSet.of(Skill.PRAYER));
 
-		public static final Set<Skill> STR_RANGE_MAGE = ImmutableSet.of(
+		public static final Set<Skill> STR_RANGE_MAGE = EnumSet.of(
 			Skill.STRENGTH,
 			Skill.RANGED,
 			Skill.MAGIC);
